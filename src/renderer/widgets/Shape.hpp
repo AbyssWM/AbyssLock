@@ -4,7 +4,7 @@
 #include "../../helpers/Color.hpp"
 #include "../../config/ConfigDataValues.hpp"
 #include "Shadowable.hpp"
-#include <hyprutils/math/Box.hpp>
+#include <abyssutils/math/Box.hpp>
 #include <string>
 #include <unordered_map>
 #include <any>
@@ -32,7 +32,7 @@ class CShape : public IWidget {
     int                rounding;
     double             border;
     double             angle;
-    CHyprColor         color;
+    CAbyssColor         color;
     CGradientValueData borderGrad;
     Vector2D           size;
     Vector2D           pos;

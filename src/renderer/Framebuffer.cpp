@@ -1,6 +1,6 @@
 #include "Framebuffer.hpp"
 #include "../helpers/Log.hpp"
-#include <hyprutils/os/FileDescriptor.hpp>
+#include <abyssutils/os/FileDescriptor.hpp>
 #include <libdrm/drm_fourcc.h>
 #include <utility>
 

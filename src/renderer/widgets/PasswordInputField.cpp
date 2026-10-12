@@ -1,7 +1,7 @@
 #include "PasswordInputField.hpp"
 #include "../AsyncResourceManager.hpp"
 #include "../Renderer.hpp"
-#include "../../core/hyprlock.hpp"
+#include "../../core/abysslock.hpp"
 #include "../../auth/Auth.hpp"
 #include "../../config/ConfigDataValues.hpp"
 #include "../../config/ConfigManager.hpp"
@@ -9,13 +9,13 @@
 #include "../../core/AnimationManager.hpp"
 #include "../../helpers/Color.hpp"
 #include <cmath>
-#include <hyprgraphics/resource/resources/TextResource.hpp>
-#include <hyprutils/math/Vector2D.hpp>
-#include <hyprutils/string/String.hpp>
+#include <abyssgraphics/resource/resources/TextResource.hpp>
+#include <abyssutils/math/Vector2D.hpp>
+#include <abyssutils/string/String.hpp>
 #include <algorithm>
-#include <hyprlang.hpp>
+#include <abyssparse.hpp>
 
-using namespace Hyprutils::String;
+using namespace Abyssutils::String;
 
 CPasswordInputField::~CPasswordInputField() {
     reset();
@@ -36,33 +36,33 @@ void CPasswordInputField::configure(const std::unordered_map<std::string, std::a
     try {
         pos                      = CLayoutValueData::fromAnyPv(props.at("position"))->getAbsolute(viewport);
         configSize               = CLayoutValueData::fromAnyPv(props.at("size"))->getAbsolute(viewport);
-        halign                   = std::any_cast<Hyprlang::STRING>(props.at("halign"));
-        valign                   = std::any_cast<Hyprlang::STRING>(props.at("valign"));
-        outThick                 = std::any_cast<Hyprlang::INT>(props.at("outline_thickness"));
-        dots.size                = std::any_cast<Hyprlang::FLOAT>(props.at("dots_size"));
-        dots.spacing             = std::any_cast<Hyprlang::FLOAT>(props.at("dots_spacing"));
-        dots.center              = std::any_cast<Hyprlang::INT>(props.at("dots_center"));
-        dots.rounding            = std::any_cast<Hyprlang::INT>(props.at("dots_rounding"));
-        dots.textFormat          = std::any_cast<Hyprlang::STRING>(props.at("dots_text_format"));
-        fadeOnEmpty              = std::any_cast<Hyprlang::INT>(props.at("fade_on_empty"));
-        fadeTimeoutMs            = std::any_cast<Hyprlang::INT>(props.at("fade_timeout"));
-        hiddenInputState.enabled = std::any_cast<Hyprlang::INT>(props.at("hide_input"));
-        rounding                 = std::any_cast<Hyprlang::INT>(props.at("rounding"));
-        configPlaceholderText    = std::any_cast<Hyprlang::STRING>(props.at("placeholder_text"));
-        configFailText           = std::any_cast<Hyprlang::STRING>(props.at("fail_text"));
-        configCheckText          = std::any_cast<Hyprlang::STRING>(props.at("check_text"));
-        fontFamily               = std::any_cast<Hyprlang::STRING>(props.at("font_family"));
+        halign                   = std::any_cast<Abyssparse::STRING>(props.at("halign"));
+        valign                   = std::any_cast<Abyssparse::STRING>(props.at("valign"));
+        outThick                 = std::any_cast<Abyssparse::INT>(props.at("outline_thickness"));
+        dots.size                = std::any_cast<Abyssparse::FLOAT>(props.at("dots_size"));
+        dots.spacing             = std::any_cast<Abyssparse::FLOAT>(props.at("dots_spacing"));
+        dots.center              = std::any_cast<Abyssparse::INT>(props.at("dots_center"));
+        dots.rounding            = std::any_cast<Abyssparse::INT>(props.at("dots_rounding"));
+        dots.textFormat          = std::any_cast<Abyssparse::STRING>(props.at("dots_text_format"));
+        fadeOnEmpty              = std::any_cast<Abyssparse::INT>(props.at("fade_on_empty"));
+        fadeTimeoutMs            = std::any_cast<Abyssparse::INT>(props.at("fade_timeout"));
+        hiddenInputState.enabled = std::any_cast<Abyssparse::INT>(props.at("hide_input"));
+        rounding                 = std::any_cast<Abyssparse::INT>(props.at("rounding"));
+        configPlaceholderText    = std::any_cast<Abyssparse::STRING>(props.at("placeholder_text"));
+        configFailText           = std::any_cast<Abyssparse::STRING>(props.at("fail_text"));
+        configCheckText          = std::any_cast<Abyssparse::STRING>(props.at("check_text"));
+        fontFamily               = std::any_cast<Abyssparse::STRING>(props.at("font_family"));
         colorConfig.outer        = CGradientValueData::fromAnyPv(props.at("outer_color"));
-        colorConfig.inner        = std::any_cast<Hyprlang::INT>(props.at("inner_color"));
-        colorConfig.font         = std::any_cast<Hyprlang::INT>(props.at("font_color"));
+        colorConfig.inner        = std::any_cast<Abyssparse::INT>(props.at("inner_color"));
+        colorConfig.font         = std::any_cast<Abyssparse::INT>(props.at("font_color"));
         colorConfig.fail         = CGradientValueData::fromAnyPv(props.at("fail_color"));
         colorConfig.check        = CGradientValueData::fromAnyPv(props.at("check_color"));
         colorConfig.both         = CGradientValueData::fromAnyPv(props.at("bothlock_color"));
         colorConfig.caps         = CGradientValueData::fromAnyPv(props.at("capslock_color"));
         colorConfig.num          = CGradientValueData::fromAnyPv(props.at("numlock_color"));
-        colorConfig.invertNum    = std::any_cast<Hyprlang::INT>(props.at("invert_numlock"));
-        colorConfig.swapFont     = std::any_cast<Hyprlang::INT>(props.at("swap_font_color"));
-        colorConfig.hiddenBase   = std::any_cast<Hyprlang::INT>(props.at("hide_input_base_color"));
+        colorConfig.invertNum    = std::any_cast<Abyssparse::INT>(props.at("invert_numlock"));
+        colorConfig.swapFont     = std::any_cast<Abyssparse::INT>(props.at("swap_font_color"));
+        colorConfig.hiddenBase   = std::any_cast<Abyssparse::INT>(props.at("hide_input_base_color"));
     } catch (const std::bad_any_cast& e) {
         RASSERT(false, "Failed to construct CPasswordInputField: {}", e.what()); //
     } catch (const std::out_of_range& e) {
@@ -89,7 +89,7 @@ void CPasswordInputField::configure(const std::unordered_map<std::string, std::a
     pos = posFromHVAlign(viewport, size->goal(), configPos, halign, valign);
 
     if (!dots.textFormat.empty()) {
-        Hyprgraphics::CTextResource::STextResourceData request;
+        Abyssgraphics::CTextResource::STextResourceData request;
         request.text        = dots.textFormat;
         request.font        = fontFamily;
         request.color       = colorConfig.font.asRGB();
@@ -107,7 +107,7 @@ void CPasswordInputField::reset() {
         fade.fadeOutTimer.reset();
     }
 
-    if (g_pHyprlock->isTerminating())
+    if (g_pAbysslock->isTerminating())
         return;
 
     if (placeholder.asset)
@@ -127,7 +127,7 @@ void CPasswordInputField::onFadeOutTimer() {
     fade.allowFadeOut = true;
     fade.fadeOutTimer.reset();
 
-    g_pHyprlock->renderOutput(outputStringPort);
+    g_pAbysslock->renderOutput(outputStringPort);
 }
 
 void CPasswordInputField::updateFade() {
@@ -151,7 +151,7 @@ void CPasswordInputField::updateFade() {
             *fade.a           = 0.0;
             fade.allowFadeOut = false;
         } else if (!fade.fadeOutTimer)
-            fade.fadeOutTimer = g_pHyprlock->addTimer(std::chrono::milliseconds(fadeTimeoutMs), [REF = m_self](auto, auto) { fadeOutCallback(REF); }, nullptr);
+            fade.fadeOutTimer = g_pAbysslock->addTimer(std::chrono::milliseconds(fadeTimeoutMs), [REF = m_self](auto, auto) { fadeOutCallback(REF); }, nullptr);
 
     } else if (INPUTUSED && fade.a->goal() != 1.0)
         *fade.a = 1.0;
@@ -182,7 +182,7 @@ bool CPasswordInputField::draw(const SRenderData& data) {
 
     bool forceReload = false;
 
-    passwordLength = g_pHyprlock->getPasswordBufferDisplayLen();
+    passwordLength = g_pAbysslock->getPasswordBufferDisplayLen();
     checkWaiting   = g_pAuth->checkWaiting();
     displayFail    = g_pAuth->m_bDisplayFailText;
 
@@ -206,9 +206,9 @@ bool CPasswordInputField::draw(const SRenderData& data) {
     //for (auto& c : outerGrad.m_vColors)
     //    c.a *= fade.a->value() * data.opacity;
 
-    CHyprColor innerCol = colorState.inner->value();
+    CAbyssColor innerCol = colorState.inner->value();
     innerCol.a *= fade.a->value() * data.opacity;
-    CHyprColor fontCol = colorState.font;
+    CAbyssColor fontCol = colorState.font;
     fontCol.a *= fade.a->value() * data.opacity;
 
     if (outThick > 0) {
@@ -363,7 +363,7 @@ void CPasswordInputField::updatePlaceholder() {
     placeholder.asset       = nullptr;
 
     // query
-    Hyprgraphics::CTextResource::STextResourceData request;
+    Abyssgraphics::CTextResource::STextResourceData request;
     request.text     = placeholder.currentText;
     request.font     = fontFamily;
     request.color    = colorState.font.asRGB();
@@ -415,7 +415,7 @@ void CPasswordInputField::updateHiddenInputState() {
     const double OKICHHUE = (rand() % 10000000 / 10000000.0) * M_PI * 4;
 
     // convert back to OkLab
-    const Hyprgraphics::CColor newColor = Hyprgraphics::CColor::SOkLab{
+    const Abyssgraphics::CColor newColor = Abyssgraphics::CColor::SOkLab{
         .l = BASEOK.l,
         .a = OKICHCHROMA * std::cos(OKICHHUE),
         .b = OKICHCHROMA * std::sin(OKICHHUE),
@@ -427,13 +427,13 @@ void CPasswordInputField::updateHiddenInputState() {
 
 void CPasswordInputField::updateColors() {
     const bool          BORDERLESS = outThick == 0;
-    const bool          NUMLOCK    = (colorConfig.invertNum) ? !g_pHyprlock->m_bNumLock : g_pHyprlock->m_bNumLock;
+    const bool          NUMLOCK    = (colorConfig.invertNum) ? !g_pAbysslock->m_bNumLock : g_pAbysslock->m_bNumLock;
 
     CGradientValueData* targetGrad = nullptr;
 
-    if (g_pHyprlock->m_bCapsLock && NUMLOCK && !colorConfig.both->m_bIsFallback)
+    if (g_pAbysslock->m_bCapsLock && NUMLOCK && !colorConfig.both->m_bIsFallback)
         targetGrad = colorConfig.both;
-    else if (g_pHyprlock->m_bCapsLock)
+    else if (g_pAbysslock->m_bCapsLock)
         targetGrad = colorConfig.caps;
     else if (NUMLOCK && !colorConfig.num->m_bIsFallback)
         targetGrad = colorConfig.num;
@@ -444,8 +444,8 @@ void CPasswordInputField::updateColors() {
         targetGrad = colorConfig.fail;
 
     CGradientValueData* outerTarget = colorConfig.outer;
-    CHyprColor          innerTarget = colorConfig.inner;
-    CHyprColor          fontTarget  = colorConfig.font;
+    CAbyssColor          innerTarget = colorConfig.inner;
+    CAbyssColor          fontTarget  = colorConfig.font;
 
     if (displayFail)
         fontTarget = colorConfig.fail->m_vColors.front();

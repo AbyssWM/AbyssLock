@@ -5,7 +5,7 @@
 #include "../../core/Seat.hpp"
 #include "../Texture.hpp"
 
-#include <hyprgraphics/resource/resources/TextResource.hpp>
+#include <abyssgraphics/resource/resources/TextResource.hpp>
 #include <string>
 #include <unordered_map>
 #include <any>
@@ -29,7 +29,7 @@ class IWidget {
                                    const double& ang = 0);
     static int      roundingForBox(const CBox& box, int roundingConfig);
     static int      roundingForBorderBox(const CBox& borderBox, int roundingConfig, int thickness);
-    static Hyprgraphics::CTextResource::eTextAlignmentMode parseTextAlignment(const std::string& alignment);
+    static Abyssgraphics::CTextResource::eTextAlignmentMode parseTextAlignment(const std::string& alignment);
 
     virtual CBox                                           getBoundingBoxWl() const {
         return CBox();

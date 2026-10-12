@@ -3,7 +3,7 @@
 
 #include <format>
 #include <print>
-#include <hyprutils/cli/Logger.hpp>
+#include <abyssutils/cli/Logger.hpp>
 
 #define RASSERT(expr, reason, ...)                                                                                                                                                 \
     if (!(expr)) {                                                                                                                                                                 \
@@ -19,11 +19,11 @@ namespace Log {
     class CLogger {
       public:
         template <typename... Args>
-        void log(Hyprutils::CLI::eLogLevel level, std::format_string<Args...> fmt, Args&&... args) {
+        void log(Abyssutils::CLI::eLogLevel level, std::format_string<Args...> fmt, Args&&... args) {
             if (m_quiet)
                 return;
 
-            if (level == Hyprutils::CLI::LOG_TRACE && !m_verbose)
+            if (level == Abyssutils::CLI::LOG_TRACE && !m_verbose)
                 return;
 
             m_logger.log(level, std::vformat(fmt.get(), std::make_format_args(args...)));
@@ -31,7 +31,7 @@ namespace Log {
 
         void setVerbose() {
             m_verbose = true;
-            m_logger.setLogLevel(Hyprutils::CLI::LOG_TRACE);
+            m_logger.setLogLevel(Abyssutils::CLI::LOG_TRACE);
         }
 
         void setQuiet() {
@@ -46,15 +46,15 @@ namespace Log {
         bool                    m_quiet   = false;
         bool                    m_verbose = false;
 
-        Hyprutils::CLI::CLogger m_logger;
+        Abyssutils::CLI::CLogger m_logger;
     };
 
     inline UP<CLogger> logger = makeUnique<CLogger>();
 
     //
-    inline constexpr const Hyprutils::CLI::eLogLevel WARN  = Hyprutils::CLI::LOG_WARN;
-    inline constexpr const Hyprutils::CLI::eLogLevel ERR   = Hyprutils::CLI::LOG_ERR;
-    inline constexpr const Hyprutils::CLI::eLogLevel CRIT  = Hyprutils::CLI::LOG_CRIT;
-    inline constexpr const Hyprutils::CLI::eLogLevel INFO  = Hyprutils::CLI::LOG_DEBUG;
-    inline constexpr const Hyprutils::CLI::eLogLevel TRACE = Hyprutils::CLI::LOG_TRACE;
+    inline constexpr const Abyssutils::CLI::eLogLevel WARN  = Abyssutils::CLI::LOG_WARN;
+    inline constexpr const Abyssutils::CLI::eLogLevel ERR   = Abyssutils::CLI::LOG_ERR;
+    inline constexpr const Abyssutils::CLI::eLogLevel CRIT  = Abyssutils::CLI::LOG_CRIT;
+    inline constexpr const Abyssutils::CLI::eLogLevel INFO  = Abyssutils::CLI::LOG_DEBUG;
+    inline constexpr const Abyssutils::CLI::eLogLevel TRACE = Abyssutils::CLI::LOG_TRACE;
 };

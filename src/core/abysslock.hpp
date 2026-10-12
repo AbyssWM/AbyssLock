@@ -25,10 +25,10 @@ struct SDMABUFModifier {
     uint64_t mod    = 0;
 };
 
-class CHyprlock {
+class CAbysslock {
   public:
-    CHyprlock(std::string_view wlDisplay, const bool immediateRender, const int gracePeriod);
-    ~CHyprlock();
+    CAbysslock(std::string_view wlDisplay, const bool immediateRender, const int gracePeriod);
+    ~CAbysslock();
 
     void                       run();
 
@@ -166,4 +166,4 @@ class CHyprlock {
     std::vector<uint32_t>    m_vPressedKeys;
 };
 
-inline UP<CHyprlock> g_pHyprlock;
+inline UP<CAbysslock> g_pAbysslock;

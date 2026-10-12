@@ -5,11 +5,11 @@
 #include "./Screencopy.hpp"
 #include "./widgets/IWidget.hpp"
 
-#include <hyprgraphics/resource/AsyncResourceGatherer.hpp>
-#include <hyprgraphics/resource/resources/AsyncResource.hpp>
-#include <hyprgraphics/resource/resources/TextResource.hpp>
-#include <hyprgraphics/resource/resources/ImageResource.hpp>
-#include <hyprutils/os/FileDescriptor.hpp>
+#include <abyssgraphics/resource/AsyncResourceGatherer.hpp>
+#include <abyssgraphics/resource/resources/AsyncResource.hpp>
+#include <abyssgraphics/resource/resources/TextResource.hpp>
+#include <abyssgraphics/resource/resources/ImageResource.hpp>
+#include <abyssutils/os/FileDescriptor.hpp>
 
 class CAsyncResourceManager {
 
@@ -72,7 +72,7 @@ class CAsyncResourceManager {
 
     // For polling when using gatherInitialResources.
     bool                           m_gathered = false;
-    Hyprutils::OS::CFileDescriptor m_gatheredEventfd;
+    Abyssutils::OS::CFileDescriptor m_gatheredEventfd;
 
     bool                           m_exit = false;
 
@@ -83,9 +83,9 @@ class CAsyncResourceManager {
     std::vector<UP<CScreencopyFrame>>                 m_scFrames;
     // shared between threads
     std::mutex                                                                                              m_resourcesMutex;
-    std::unordered_map<ResourceID, std::pair<ASP<Hyprgraphics::IAsyncResource>, std::vector<AWP<IWidget>>>> m_resources;
+    std::unordered_map<ResourceID, std::pair<ASP<Abyssgraphics::IAsyncResource>, std::vector<AWP<IWidget>>>> m_resources;
 
-    Hyprgraphics::CAsyncResourceGatherer                                                                    m_gatherer;
+    Abyssgraphics::CAsyncResourceGatherer                                                                    m_gatherer;
 };
 
 inline UP<CAsyncResourceManager> g_asyncResourceManager;

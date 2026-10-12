@@ -2,17 +2,17 @@
 #include "Pam.hpp"
 #include "Fingerprint.hpp"
 #include "../config/ConfigManager.hpp"
-#include "../core/hyprlock.hpp"
+#include "../core/abysslock.hpp"
 #include "src/helpers/Log.hpp"
 
-#include <hyprlang.hpp>
+#include <abyssparse.hpp>
 #include <memory>
 
 CAuth::CAuth() {
-    static const auto ENABLEPAM = g_pConfigManager->getValue<Hyprlang::INT>("auth:pam:enabled");
+    static const auto ENABLEPAM = g_pConfigManager->getValue<Abyssparse::INT>("auth:pam:enabled");
     if (*ENABLEPAM)
         m_vImpls.emplace_back(makeShared<CPam>());
-    static const auto ENABLEFINGERPRINT = g_pConfigManager->getValue<Hyprlang::INT>("auth:fingerprint:enabled");
+    static const auto ENABLEFINGERPRINT = g_pConfigManager->getValue<Abyssparse::INT>("auth:fingerprint:enabled");
     if (*ENABLEFINGERPRINT)
         m_vImpls.emplace_back(makeShared<CFingerprint>());
 
@@ -30,7 +30,7 @@ void CAuth::submitInput(const std::string& input) {
         i->handleInput(input);
     }
 
-    g_pHyprlock->clearPasswordBuffer();
+    g_pAbysslock->clearPasswordBuffer();
 }
 
 bool CAuth::checkWaiting() {
@@ -68,30 +68,30 @@ void CAuth::terminate() {
 }
 
 static void unlockCallback(ASP<CTimer> self, void* data) {
-    g_pHyprlock->fadeOutAndUnlock();
+    g_pAbysslock->fadeOutAndUnlock();
 }
 
 void CAuth::enqueueUnlock() {
-    g_pHyprlock->addTimer(std::chrono::milliseconds(0), unlockCallback, nullptr);
+    g_pAbysslock->addTimer(std::chrono::milliseconds(0), unlockCallback, nullptr);
 }
 
 static void passwordFailCallback(ASP<CTimer> self, void* data) {
     g_pAuth->m_bDisplayFailText = true;
 
-    g_pHyprlock->enqueueForceUpdateTimers();
+    g_pAbysslock->enqueueForceUpdateTimers();
 
-    g_pHyprlock->renderAllOutputs();
+    g_pAbysslock->renderAllOutputs();
 }
 
 static void displayFailTimeoutCallback(ASP<CTimer> self, void* data) {
     if (g_pAuth->m_bDisplayFailText) {
         g_pAuth->m_bDisplayFailText = false;
-        g_pHyprlock->renderAllOutputs();
+        g_pAbysslock->renderAllOutputs();
     }
 }
 
 void CAuth::enqueueFail(const std::string& failText, eAuthImplementations implType) {
-    static const auto FAILTIMEOUT = g_pConfigManager->getValue<Hyprlang::INT>("general:fail_timeout");
+    static const auto FAILTIMEOUT = g_pConfigManager->getValue<Abyssparse::INT>("general:fail_timeout");
 
     m_sCurrentFail.failText   = failText;
     m_sCurrentFail.failSource = implType;
@@ -104,8 +104,8 @@ void CAuth::enqueueFail(const std::string& failText, eAuthImplementations implTy
         m_resetDisplayFailTimer.reset();
     }
 
-    g_pHyprlock->addTimer(std::chrono::milliseconds(0), passwordFailCallback, nullptr);
-    m_resetDisplayFailTimer = g_pHyprlock->addTimer(std::chrono::milliseconds(*FAILTIMEOUT), displayFailTimeoutCallback, nullptr);
+    g_pAbysslock->addTimer(std::chrono::milliseconds(0), passwordFailCallback, nullptr);
+    m_resetDisplayFailTimer = g_pAbysslock->addTimer(std::chrono::milliseconds(*FAILTIMEOUT), displayFailTimeoutCallback, nullptr);
 }
 
 void CAuth::resetDisplayFail() {

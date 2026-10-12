@@ -2,7 +2,7 @@
 #include "./AsyncResourceManager.hpp"
 #include "../helpers/Log.hpp"
 #include "../helpers/MiscFunctions.hpp"
-#include "../core/hyprlock.hpp"
+#include "../core/abysslock.hpp"
 #include "../core/Egl.hpp"
 #include "../config/ConfigManager.hpp"
 #include "wlr-screencopy-unstable-v1.hpp"
@@ -12,7 +12,7 @@
 #include <array>
 #include <cstdint>
 #include <gbm.h>
-#include <hyprutils/memory/UniquePtr.hpp>
+#include <abyssutils/memory/UniquePtr.hpp>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <libdrm/drm_fourcc.h>
@@ -27,12 +27,12 @@ static PFNEGLQUERYDMABUFMODIFIERSEXTPROC   eglQueryDmaBufModifiersEXT   = nullpt
 void CScreencopyFrame::capture(SP<COutput> pOutput) {
     RASSERT(pOutput, "Screencopy, but no valid output");
 
-    static const auto SCMODE = g_pConfigManager->getValue<Hyprlang::INT>("general:screencopy_mode");
+    static const auto SCMODE = g_pConfigManager->getValue<Abyssparse::INT>("general:screencopy_mode");
 
     m_asset      = makeAtomicShared<CTexture>();
     m_resourceID = CAsyncResourceManager::resourceIDForScreencopy(pOutput->stringPort);
 
-    m_sc = makeShared<CCZwlrScreencopyFrameV1>(g_pHyprlock->getScreencopy()->sendCaptureOutput(false, pOutput->m_wlOutput->resource()));
+    m_sc = makeShared<CCZwlrScreencopyFrameV1>(g_pAbysslock->getScreencopy()->sendCaptureOutput(false, pOutput->m_wlOutput->resource()));
 
     if (*SCMODE == 1)
         m_frame = makeUnique<CSCSHMFrame>(m_sc);
@@ -81,12 +81,12 @@ CSCDMAFrame::CSCDMAFrame(SP<CCZwlrScreencopyFrameV1> sc) : m_sc(sc) {
         }
     }
 
-    if (!g_pHyprlock->dma.linuxDmabuf) {
+    if (!g_pAbysslock->dma.linuxDmabuf) {
         Log::logger->log(Log::ERR, "[sc] No DMABUF support?");
         return;
     }
 
-    if (!g_pHyprlock->dma.gbmDevice) {
+    if (!g_pAbysslock->dma.gbmDevice) {
         Log::logger->log(Log::ERR, "[sc] No gbmDevice for DMABUF was created?");
         return;
     }
@@ -122,14 +122,14 @@ bool CSCDMAFrame::onBufferDone() {
 
     if (!eglQueryDmaBufModifiersEXT) {
         Log::logger->log(Log::WARN, "Querying modifiers without eglQueryDmaBufModifiersEXT support");
-        m_bo = gbm_bo_create(g_pHyprlock->dma.gbmDevice, m_w, m_h, m_fmt, flags);
+        m_bo = gbm_bo_create(g_pAbysslock->dma.gbmDevice, m_w, m_h, m_fmt, flags);
     } else {
         std::array<uint64_t, 64>   mods;
         std::array<EGLBoolean, 64> externalOnly;
         int                        num = 0;
         if (!eglQueryDmaBufModifiersEXT(g_pEGL->eglDisplay, m_fmt, 64, mods.data(), externalOnly.data(), &num) || num == 0) {
             Log::logger->log(Log::WARN, "eglQueryDmaBufModifiersEXT failed, falling back to regular bo");
-            m_bo = gbm_bo_create(g_pHyprlock->dma.gbmDevice, m_w, m_h, m_fmt, flags);
+            m_bo = gbm_bo_create(g_pAbysslock->dma.gbmDevice, m_w, m_h, m_fmt, flags);
         } else {
             Log::logger->log(Log::INFO, "eglQueryDmaBufModifiersEXT found {} mods", num);
             std::vector<uint64_t> goodMods;
@@ -143,7 +143,7 @@ bool CSCDMAFrame::onBufferDone() {
                 goodMods.emplace_back(mods[i]);
             }
 
-            m_bo = gbm_bo_create_with_modifiers2(g_pHyprlock->dma.gbmDevice, m_w, m_h, m_fmt, goodMods.data(), goodMods.size(), flags);
+            m_bo = gbm_bo_create_with_modifiers2(g_pAbysslock->dma.gbmDevice, m_w, m_h, m_fmt, goodMods.data(), goodMods.size(), flags);
         }
     }
 
@@ -158,7 +158,7 @@ bool CSCDMAFrame::onBufferDone() {
     m_mod = gbm_bo_get_modifier(m_bo);
     Log::logger->log(Log::INFO, "[bo] chose modifier {:x}", m_mod);
 
-    auto params = makeShared<CCZwpLinuxBufferParamsV1>(g_pHyprlock->dma.linuxDmabuf->sendCreateParams());
+    auto params = makeShared<CCZwpLinuxBufferParamsV1>(g_pAbysslock->dma.linuxDmabuf->sendCreateParams());
     if (!params) {
         Log::logger->log(Log::ERR, "zwp_linux_dmabuf_v1_create_params failed");
         gbm_bo_destroy(m_bo);
@@ -296,14 +296,14 @@ CSCSHMFrame::CSCSHMFrame(SP<CCZwlrScreencopyFrameV1> sc) : m_sc(sc) {
             return;
         }
 
-        if (!g_pHyprlock->getShm()) {
+        if (!g_pAbysslock->getShm()) {
             Log::logger->log(Log::ERR, "[sc] [shm] Failed to get WLShm global");
             close(FD);
             m_ok = false;
             return;
         }
 
-        auto pShmPool = makeShared<CCWlShmPool>(g_pHyprlock->getShm()->sendCreatePool(FD, SIZE));
+        auto pShmPool = makeShared<CCWlShmPool>(g_pAbysslock->getShm()->sendCreatePool(FD, SIZE));
         m_wlBuffer    = makeShared<CCWlBuffer>(pShmPool->sendCreateBuffer(0, width, height, stride, m_shmFmt));
 
         pShmPool.reset();

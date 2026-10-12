@@ -1,5 +1,5 @@
-# hyprlock
-Hyprland's simple, yet multi-threaded and GPU-accelerated screen locking utility.
+# abysslock
+Abyssland's simple, yet multi-threaded and GPU-accelerated screen locking utility.
 
 ## Features
  - Uses the ext-session-lock protocol
@@ -8,7 +8,7 @@ Hyprland's simple, yet multi-threaded and GPU-accelerated screen locking utility
  - Multi-threaded resource acquisition
  - Blurred screenshot as the background
  - Native fingerprint support (using libfprint's dbus interface)
- - Some of Hyprland's eyecandy: gradient borders, blur, animations, shadows, etc.
+ - Some of Abyssland's eyecandy: gradient borders, blur, animations, shadows, etc.
  - and more...
 
 ## How it looks
@@ -16,13 +16,13 @@ Hyprland's simple, yet multi-threaded and GPU-accelerated screen locking utility
 ![](https://i.ibb.co/8Bd98BP/20240220-00h12m46s.png)
 
 ## Docs / Configuration
-[See the wiki](https://wiki.hyprland.org/Hypr-Ecosystem/hyprlock/)
+[See the wiki](https://wiki.abyssland.org/Abyss-Ecosystem/abysslock/)
 
 ## Arch install
 ```sh
-pacman -S hyprlock # binary x86 tagged release
+pacman -S abysslock # binary x86 tagged release
 # or
-yay -S hyprlock-git # compiles from latest source
+yay -S abysslock-git # compiles from latest source
 ```
 
 ## Building
@@ -31,10 +31,10 @@ yay -S hyprlock-git # compiles from latest source
 You need the following dependencies
 
 - cairo
-- hyprgraphics
-- hyprlang
-- hyprutils
-- hyprwayland-scanner
+- abyssgraphics
+- abyssparse
+- abyssutils
+- abyss-scanner
 - mesa (required is libgbm, libdrm and the opengl runtime)
 - pam
 - pango
@@ -51,7 +51,7 @@ Such distros usually offer development versions of library package - commonly su
 Building:
 ```sh
 cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
-cmake --build ./build --config Release --target hyprlock -j`nproc 2>/dev/null || getconf _NPROCESSORS_CONF`
+cmake --build ./build --config Release --target abysslock -j`nproc 2>/dev/null || getconf _NPROCESSORS_CONF`
 ```
 
 Installation:

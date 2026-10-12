@@ -2,12 +2,12 @@
 #include "../Renderer.hpp"
 #include "../AsyncResourceManager.hpp"
 #include "../../helpers/Log.hpp"
-#include "../../core/hyprlock.hpp"
+#include "../../core/abysslock.hpp"
 #include "../../helpers/Color.hpp"
 #include "../../helpers/MiscFunctions.hpp"
 #include "../../config/ConfigDataValues.hpp"
 #include "src/defines.hpp"
-#include <hyprlang.hpp>
+#include <abyssparse.hpp>
 #include <stdexcept>
 
 CLabel::~CLabel() {
@@ -56,9 +56,9 @@ void CLabel::onTimerUpdate() {
 void CLabel::plantTimer() {
 
     if (label.updateEveryMs != 0)
-        labelTimer = g_pHyprlock->addTimer(std::chrono::milliseconds((int)label.updateEveryMs), [REF = m_self](auto, auto) { onTimer(REF); }, this, label.allowForceUpdate);
+        labelTimer = g_pAbysslock->addTimer(std::chrono::milliseconds((int)label.updateEveryMs), [REF = m_self](auto, auto) { onTimer(REF); }, this, label.allowForceUpdate);
     else if (label.updateEveryMs == 0 && label.allowForceUpdate)
-        labelTimer = g_pHyprlock->addTimer(std::chrono::hours(1), [REF = m_self](auto, auto) { onTimer(REF); }, this, true);
+        labelTimer = g_pAbysslock->addTimer(std::chrono::hours(1), [REF = m_self](auto, auto) { onTimer(REF); }, this, true);
 }
 
 void CLabel::configure(const std::unordered_map<std::string, std::any>& props, const SP<COutput>& pOutput) {
@@ -71,17 +71,17 @@ void CLabel::configure(const std::unordered_map<std::string, std::any>& props, c
 
     try {
         configPos      = CLayoutValueData::fromAnyPv(props.at("position"))->getAbsolute(viewport);
-        labelPreFormat = std::any_cast<Hyprlang::STRING>(props.at("text"));
-        halign         = std::any_cast<Hyprlang::STRING>(props.at("halign"));
-        valign         = std::any_cast<Hyprlang::STRING>(props.at("valign"));
-        m_angle        = std::any_cast<Hyprlang::FLOAT>(props.at("rotate"));
+        labelPreFormat = std::any_cast<Abyssparse::STRING>(props.at("text"));
+        halign         = std::any_cast<Abyssparse::STRING>(props.at("halign"));
+        valign         = std::any_cast<Abyssparse::STRING>(props.at("valign"));
+        m_angle        = std::any_cast<Abyssparse::FLOAT>(props.at("rotate"));
         m_angle        = m_angle * M_PI / 180.0;
-        onclickCommand = std::any_cast<Hyprlang::STRING>(props.at("onclick"));
+        onclickCommand = std::any_cast<Abyssparse::STRING>(props.at("onclick"));
 
-        std::string textAlign  = std::any_cast<Hyprlang::STRING>(props.at("text_align"));
-        std::string fontFamily = std::any_cast<Hyprlang::STRING>(props.at("font_family"));
-        CHyprColor  labelColor = std::any_cast<Hyprlang::INT>(props.at("color"));
-        int         fontSize   = std::any_cast<Hyprlang::INT>(props.at("font_size"));
+        std::string textAlign  = std::any_cast<Abyssparse::STRING>(props.at("text_align"));
+        std::string fontFamily = std::any_cast<Abyssparse::STRING>(props.at("font_family"));
+        CAbyssColor  labelColor = std::any_cast<Abyssparse::INT>(props.at("color"));
+        int         fontSize   = std::any_cast<Abyssparse::INT>(props.at("font_size"));
 
         label = formatString(labelPreFormat);
 
@@ -116,7 +116,7 @@ void CLabel::reset() {
         labelTimer.reset();
     }
 
-    if (g_pHyprlock->isTerminating())
+    if (g_pAbysslock->isTerminating())
         return;
 
     if (asset)

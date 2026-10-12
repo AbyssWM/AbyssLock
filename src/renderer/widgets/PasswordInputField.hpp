@@ -8,7 +8,7 @@
 #include "Shadowable.hpp"
 #include "../../config/ConfigDataValues.hpp"
 #include "../../helpers/AnimatedVariable.hpp"
-#include <hyprutils/math/Vector2D.hpp>
+#include <abyssutils/math/Vector2D.hpp>
 #include <vector>
 #include <any>
 #include <unordered_map>
@@ -88,7 +88,7 @@ class CPasswordInputField : public IWidget {
     } placeholder;
 
     struct {
-        CHyprColor lastColor;
+        CAbyssColor lastColor;
         int        lastQuadrant       = 0;
         int        lastPasswordLength = 0;
         bool       enabled            = false;
@@ -96,15 +96,15 @@ class CPasswordInputField : public IWidget {
 
     struct {
         CGradientValueData* outer = nullptr;
-        CHyprColor          inner;
-        CHyprColor          font;
+        CAbyssColor          inner;
+        CAbyssColor          font;
         CGradientValueData* fail  = nullptr;
         CGradientValueData* check = nullptr;
         CGradientValueData* caps  = nullptr;
         CGradientValueData* num   = nullptr;
         CGradientValueData* both  = nullptr;
 
-        CHyprColor          hiddenBase;
+        CAbyssColor          hiddenBase;
 
         int                 transitionMs = 0;
         bool                invertNum    = false;
@@ -113,10 +113,10 @@ class CPasswordInputField : public IWidget {
 
     struct {
         PHLANIMVAR<CGradientValueData> outer;
-        PHLANIMVAR<CHyprColor>         inner;
+        PHLANIMVAR<CAbyssColor>         inner;
         // Font color is only chaned, when `swap_font_color` is set to true and no border is present.
         // It is not animated, because that does not look good and we would need to rerender the text for each frame.
-        CHyprColor font;
+        CAbyssColor font;
     } colorState;
 
     bool        fadeOnEmpty;

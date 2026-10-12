@@ -1,28 +1,28 @@
 
 #include "config/ConfigManager.hpp"
-#include "core/hyprlock.hpp"
+#include "core/abysslock.hpp"
 #include "helpers/Log.hpp"
 #include "core/AnimationManager.hpp"
 
 #include <string_view>
 
-#include <hyprutils/cli/ArgumentParser.hpp>
+#include <abyssutils/cli/ArgumentParser.hpp>
 
 static void printVersion() {
-    constexpr bool ISTAGGEDRELEASE = std::string_view(HYPRLOCK_COMMIT) == HYPRLOCK_VERSION_COMMIT;
+    constexpr bool ISTAGGEDRELEASE = std::string_view(ABYSSLOCK_COMMIT) == ABYSSLOCK_VERSION_COMMIT;
     if (ISTAGGEDRELEASE)
-        std::println("Hyprlock version v{}", HYPRLOCK_VERSION);
+        std::println("Abysslock version v{}", ABYSSLOCK_VERSION);
     else
-        std::println("Hyprlock version v{} (commit {})", HYPRLOCK_VERSION, HYPRLOCK_COMMIT);
+        std::println("Abysslock version v{} (commit {})", ABYSSLOCK_VERSION, ABYSSLOCK_COMMIT);
 }
 
 int main(int argc, char** argv, char** envp) {
     std::vector<const char*>        args(argv, argv + argc);
 
-    Hyprutils::CLI::CArgumentParser argParser(args);
+    Abyssutils::CLI::CArgumentParser argParser(args);
 
     ASSERT(argParser.registerBoolOption("help", "h", "Show this help message").has_value());
-    ASSERT(argParser.registerBoolOption("version", "V", "Print hyprlock version, then exit").has_value());
+    ASSERT(argParser.registerBoolOption("version", "V", "Print abysslock version, then exit").has_value());
     ASSERT(argParser.registerBoolOption("verbose", "v", "Enable verbose logging").has_value());
     ASSERT(argParser.registerBoolOption("quiet", "q", "Disable logging").has_value());
     ASSERT(argParser.registerStringOption("config", "c", "Specify config file to use").has_value());
@@ -40,7 +40,7 @@ int main(int argc, char** argv, char** envp) {
     }
 
     if (argParser.getBool("help")) {
-        std::print("{}", argParser.getDescription("Hyprlock CLI Arguments", 87));
+        std::print("{}", argParser.getDescription("Abysslock CLI Arguments", 87));
         return 0;
     }
 
@@ -68,7 +68,7 @@ int main(int argc, char** argv, char** envp) {
     if (!quiet)
         printVersion();
 
-    g_pAnimationManager = makeUnique<CHyprlockAnimationManager>();
+    g_pAnimationManager = makeUnique<CAbysslockAnimationManager>();
 
     auto configPath = CConfigManager::resolveConfigPath(argParser.getString("config"));
     if (!configPath.has_value()) {
@@ -88,10 +88,10 @@ int main(int argc, char** argv, char** envp) {
         g_pConfigManager->m_AnimationTree.setConfigForNode("fadeIn", false, 0.f, "default");
 
     try {
-        g_pHyprlock = makeUnique<CHyprlock>(argParser.getString("display").value_or(""), immediateRender, graceSeconds);
-        g_pHyprlock->run();
+        g_pAbysslock = makeUnique<CAbysslock>(argParser.getString("display").value_or(""), immediateRender, graceSeconds);
+        g_pAbysslock->run();
     } catch (const std::exception& ex) {
-        Log::logger->log(Log::CRIT, "Hyprlock threw: {}", ex.what());
+        Log::logger->log(Log::CRIT, "Abysslock threw: {}", ex.what());
         return 1;
     }
 

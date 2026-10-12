@@ -1,6 +1,6 @@
 #pragma once
 
-#include <hyprutils/animation/AnimatedVariable.hpp>
+#include <abyssutils/animation/AnimatedVariable.hpp>
 
 #include "Color.hpp"
 #include "Math.hpp"
@@ -33,7 +33,7 @@ struct STypeToAnimatedVarType_t<Vector2D> {
 };
 
 template <>
-struct STypeToAnimatedVarType_t<CHyprColor> {
+struct STypeToAnimatedVarType_t<CAbyssColor> {
     static constexpr eAnimatedVarType value = AVARTYPE_COLOR;
 };
 
@@ -53,12 +53,12 @@ concept OneOf = (... or std::same_as<T, U>);
 // This is mainly to get better errors if we put a type that's not supported
 // Otherwise template errors are ugly
 template <class T>
-concept Animable = OneOf<T, Vector2D, float, CHyprColor, CGradientValueData>;
+concept Animable = OneOf<T, Vector2D, float, CAbyssColor, CGradientValueData>;
 
 struct SAnimationContext {};
 
 template <Animable VarType>
-using CAnimatedVariable = Hyprutils::Animation::CGenericAnimatedVariable<VarType, SAnimationContext>;
+using CAnimatedVariable = Abyssutils::Animation::CGenericAnimatedVariable<VarType, SAnimationContext>;
 
 template <Animable VarType>
 using PHLANIMVAR = UP<CAnimatedVariable<VarType>>;

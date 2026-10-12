@@ -5,13 +5,13 @@
 #include <cmath>
 #include <fcntl.h>
 #include <filesystem>
-#include <hyprutils/os/Process.hpp>
-#include <hyprutils/string/String.hpp>
+#include <abyssutils/os/Process.hpp>
+#include <abyssutils/string/String.hpp>
 #include <pwd.h>
 #include <unistd.h>
 
-using namespace Hyprutils::String;
-using namespace Hyprutils::OS;
+using namespace Abyssutils::String;
+using namespace Abyssutils::OS;
 
 std::string absolutePath(const std::string& rawpath, const std::string& currentDir) {
     std::filesystem::path path(rawpath);
@@ -61,7 +61,7 @@ int64_t configStringToInt(const std::string& VALUE) {
                 a = std::round(std::stof(trim(rolling.substr(0, rolling.find(',')))) * 255.f);
             } catch (std::exception& e) { throw std::invalid_argument("failed parsing " + VALUEWITHOUTFUNC); }
 
-            return (a * (Hyprlang::INT)0x1000000) + (r * (Hyprlang::INT)0x10000) + (g * (Hyprlang::INT)0x100) + b;
+            return (a * (Abyssparse::INT)0x1000000) + (r * (Abyssparse::INT)0x10000) + (g * (Abyssparse::INT)0x100) + b;
         } else if (VALUEWITHOUTFUNC.length() == 8) {
             const auto RGBA = parseHex(VALUEWITHOUTFUNC);
             // now we need to RGBA -> ARGB. The config holds ARGB only.
@@ -83,7 +83,7 @@ int64_t configStringToInt(const std::string& VALUE) {
             rolling             = rolling.substr(rolling.find(',') + 1);
             auto b              = configStringToInt(trim(rolling.substr(0, rolling.find(','))));
 
-            return (Hyprlang::INT)0xFF000000 + (r * (Hyprlang::INT)0x10000) + (g * (Hyprlang::INT)0x100) + b;
+            return (Abyssparse::INT)0xFF000000 + (r * (Abyssparse::INT)0x10000) + (g * (Abyssparse::INT)0x100) + b;
         } else if (VALUEWITHOUTFUNC.length() == 6) {
             return parseHex(VALUEWITHOUTFUNC) + 0xFF000000;
         }
@@ -113,7 +113,7 @@ int createPoolFile(size_t size, std::string& name) {
         return -1;
     }
 
-    name = std::string(XDGRUNTIMEDIR) + "/.hyprlock_sc_XXXXXX";
+    name = std::string(XDGRUNTIMEDIR) + "/.abysslock_sc_XXXXXX";
 
     const auto FD = mkstemp((char*)name.c_str());
     if (FD < 0) {

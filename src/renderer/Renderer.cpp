@@ -5,7 +5,7 @@
 #include "../core/AnimationManager.hpp"
 #include "../core/Egl.hpp"
 #include "../core/Output.hpp"
-#include "../core/hyprlock.hpp"
+#include "../core/abysslock.hpp"
 #include "../helpers/Color.hpp"
 #include "../helpers/Log.hpp"
 #include <GLES3/gl32.h>
@@ -200,7 +200,7 @@ CRenderer::CRenderer() {
 
 //
 CRenderer::SRenderFeedback CRenderer::renderLock(const CSessionLockSurface& surf) {
-    projection = Mat3x3::outputProjection(surf.size, HYPRUTILS_TRANSFORM_NORMAL);
+    projection = Mat3x3::outputProjection(surf.size, ABYSSUTILS_TRANSFORM_NORMAL);
 
     g_pEGL->makeCurrent(surf.eglSurface);
     glViewport(0, 0, surf.size.x, surf.size.y);
@@ -227,9 +227,9 @@ CRenderer::SRenderFeedback CRenderer::renderLock(const CSessionLockSurface& surf
     return feedback;
 }
 
-void CRenderer::renderRect(const CBox& box, const CHyprColor& col, int rounding) {
+void CRenderer::renderRect(const CBox& box, const CAbyssColor& col, int rounding) {
     const auto ROUNDEDBOX = box.copy().round();
-    Mat3x3     matrix     = projMatrix.projectBox(ROUNDEDBOX, HYPRUTILS_TRANSFORM_NORMAL, box.rot);
+    Mat3x3     matrix     = projMatrix.projectBox(ROUNDEDBOX, ABYSSUTILS_TRANSFORM_NORMAL, box.rot);
     Mat3x3     glMatrix   = projection.copy().multiply(matrix);
 
     glUseProgram(rectShader.program);
@@ -258,7 +258,7 @@ void CRenderer::renderRect(const CBox& box, const CHyprColor& col, int rounding)
 
 void CRenderer::renderBorder(const CBox& box, const CGradientValueData& gradient, int thickness, int rounding, float alpha) {
     const auto ROUNDEDBOX = box.copy().round();
-    Mat3x3     matrix     = projMatrix.projectBox(ROUNDEDBOX, HYPRUTILS_TRANSFORM_NORMAL, box.rot);
+    Mat3x3     matrix     = projMatrix.projectBox(ROUNDEDBOX, ABYSSUTILS_TRANSFORM_NORMAL, box.rot);
     Mat3x3     glMatrix   = projection.copy().multiply(matrix);
 
     glUseProgram(borderShader.program);
@@ -295,7 +295,7 @@ void CRenderer::renderBorder(const CBox& box, const CGradientValueData& gradient
 
 void CRenderer::renderTexture(const CBox& box, const CTexture& tex, float a, int rounding, std::optional<eTransform> tr) {
     const auto ROUNDEDBOX = box.copy().round();
-    Mat3x3     matrix     = projMatrix.projectBox(ROUNDEDBOX, tr.value_or(HYPRUTILS_TRANSFORM_FLIPPED_180), box.rot);
+    Mat3x3     matrix     = projMatrix.projectBox(ROUNDEDBOX, tr.value_or(ABYSSUTILS_TRANSFORM_FLIPPED_180), box.rot);
     Mat3x3     glMatrix   = projection.copy().multiply(matrix);
 
     CShader*   shader = &texShader;
@@ -336,7 +336,7 @@ void CRenderer::renderTexture(const CBox& box, const CTexture& tex, float a, int
 
 void CRenderer::renderTextureMix(const CBox& box, const CTexture& tex, const CTexture& tex2, float a, float mixFactor, int rounding, std::optional<eTransform> tr) {
     const auto ROUNDEDBOX = box.copy().round();
-    Mat3x3     matrix     = projMatrix.projectBox(ROUNDEDBOX, tr.value_or(HYPRUTILS_TRANSFORM_FLIPPED_180), box.rot);
+    Mat3x3     matrix     = projMatrix.projectBox(ROUNDEDBOX, tr.value_or(ABYSSUTILS_TRANSFORM_FLIPPED_180), box.rot);
     Mat3x3     glMatrix   = projection.copy().multiply(matrix);
 
     CShader*   shader = &texMixShader;
@@ -394,7 +394,7 @@ std::vector<ASP<IWidget>>& CRenderer::getOrCreateWidgetsFor(const CSessionLockSu
         auto CWIDGETS = g_pConfigManager->getWidgetConfigs();
 
         std::ranges::sort(CWIDGETS, [](CConfigManager::SWidgetConfig& a, CConfigManager::SWidgetConfig& b) {
-            return std::any_cast<Hyprlang::INT>(a.values.at("zindex")) < std::any_cast<Hyprlang::INT>(b.values.at("zindex"));
+            return std::any_cast<Abyssparse::INT>(a.values.at("zindex")) < std::any_cast<Abyssparse::INT>(b.values.at("zindex"));
         });
 
         const auto POUTPUT = surf.m_outputRef.lock();
@@ -431,7 +431,7 @@ void CRenderer::blurFB(const CFramebuffer& outfb, SBlurParams params) {
 
     CBox box{0, 0, outfb.m_vSize.x, outfb.m_vSize.y};
     box.round();
-    Mat3x3       matrix   = projMatrix.projectBox(box, HYPRUTILS_TRANSFORM_NORMAL, 0);
+    Mat3x3       matrix   = projMatrix.projectBox(box, ABYSSUTILS_TRANSFORM_NORMAL, 0);
     Mat3x3       glMatrix = projection.copy().multiply(matrix);
 
     CFramebuffer mirrors[2];
@@ -573,7 +573,7 @@ void CRenderer::blurFB(const CFramebuffer& outfb, SBlurParams params) {
 
     // finish
     outfb.bind();
-    renderTexture(box, currentRenderToFB->m_cTex, 1.0, 0, HYPRUTILS_TRANSFORM_NORMAL);
+    renderTexture(box, currentRenderToFB->m_cTex, 1.0, 0, ABYSSUTILS_TRANSFORM_NORMAL);
 
     glEnable(GL_BLEND);
 }
@@ -610,7 +610,7 @@ void CRenderer::startFadeOut(bool unlock) {
     *opacity = 0.f;
 
     if (unlock)
-        opacity->setCallbackOnEnd([](auto) { g_pHyprlock->releaseSessionLock(); }, true);
+        opacity->setCallbackOnEnd([](auto) { g_pAbysslock->releaseSessionLock(); }, true);
 }
 
 void CRenderer::warpOpacity(float newOpacity) {

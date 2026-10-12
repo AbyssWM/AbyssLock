@@ -1,14 +1,14 @@
 #pragma once
 #include "../helpers/Log.hpp"
 #include "../helpers/Color.hpp"
-#include <hyprutils/math/Vector2D.hpp>
-#include <hyprutils/string/VarList.hpp>
+#include <abyssutils/math/Vector2D.hpp>
+#include <abyssutils/string/VarList.hpp>
 #include <any>
 #include <string>
 #include <vector>
 #include <cmath>
 
-using namespace Hyprutils::String;
+using namespace Abyssutils::String;
 
 enum eConfigValueDataTypes {
     CVD_TYPE_INVALID  = -1,
@@ -45,14 +45,14 @@ class CLayoutValueData : public ICustomConfigValueData {
         return P;
     }
 
-    Hyprutils::Math::Vector2D getAbsolute(const Hyprutils::Math::Vector2D& viewport) {
+    Abyssutils::Math::Vector2D getAbsolute(const Abyssutils::Math::Vector2D& viewport) {
         return {
             (m_sIsRelative.x ? (m_vValues.x / 100) * viewport.x : m_vValues.x),
             (m_sIsRelative.y ? (m_vValues.y / 100) * viewport.y : m_vValues.y),
         };
     }
 
-    Hyprutils::Math::Vector2D m_vValues;
+    Abyssutils::Math::Vector2D m_vValues;
     struct {
         bool x = false;
         bool y = false;
@@ -62,7 +62,7 @@ class CLayoutValueData : public ICustomConfigValueData {
 class CGradientValueData : public ICustomConfigValueData {
   public:
     CGradientValueData() {};
-    CGradientValueData(CHyprColor col) {
+    CGradientValueData(CAbyssColor col) {
         m_vColors.push_back(col);
         updateColorsOk();
     };
@@ -72,7 +72,7 @@ class CGradientValueData : public ICustomConfigValueData {
         return CVD_TYPE_GRADIENT;
     }
 
-    void reset(CHyprColor col) {
+    void reset(CAbyssColor col) {
         m_vColors.clear();
         m_vColors.emplace_back(col);
         m_fAngle = 0;
@@ -91,7 +91,7 @@ class CGradientValueData : public ICustomConfigValueData {
     }
 
     /* Vector containing the colors */
-    std::vector<CHyprColor> m_vColors;
+    std::vector<CAbyssColor> m_vColors;
 
     /* Vector containing pure colors for shoving into opengl */
     std::vector<float> m_vColorsOkLabA;

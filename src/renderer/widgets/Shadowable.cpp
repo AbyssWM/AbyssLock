@@ -1,15 +1,15 @@
 #include "Shadowable.hpp"
 #include "../Renderer.hpp"
-#include <hyprlang.hpp>
+#include <abyssparse.hpp>
 
 void CShadowable::configure(AWP<IWidget> widget_, const std::unordered_map<std::string, std::any>& props, const Vector2D& viewport_) {
     m_widget = widget_;
     viewport = viewport_;
 
-    size   = std::any_cast<Hyprlang::INT>(props.at("shadow_size"));
-    passes = std::any_cast<Hyprlang::INT>(props.at("shadow_passes"));
-    color  = std::any_cast<Hyprlang::INT>(props.at("shadow_color"));
-    boostA = std::any_cast<Hyprlang::FLOAT>(props.at("shadow_boost"));
+    size   = std::any_cast<Abyssparse::INT>(props.at("shadow_size"));
+    passes = std::any_cast<Abyssparse::INT>(props.at("shadow_passes"));
+    color  = std::any_cast<Abyssparse::INT>(props.at("shadow_color"));
+    boostA = std::any_cast<Abyssparse::FLOAT>(props.at("shadow_boost"));
 }
 
 void CShadowable::markShadowDirty() {
@@ -45,6 +45,6 @@ bool CShadowable::draw(const IWidget::SRenderData& data) {
         return true;
 
     CBox box = {0, 0, viewport.x, viewport.y};
-    g_pRenderer->renderTexture(box, shadowFB.m_cTex, data.opacity, 0, HYPRUTILS_TRANSFORM_NORMAL);
+    g_pRenderer->renderTexture(box, shadowFB.m_cTex, data.opacity, 0, ABYSSUTILS_TRANSFORM_NORMAL);
     return true;
 }

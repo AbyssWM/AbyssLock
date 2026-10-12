@@ -1,12 +1,12 @@
 #pragma once
 
-#include <hyprutils/memory/WeakPtr.hpp>
-#include <hyprutils/memory/UniquePtr.hpp>
-#include <hyprutils/memory/Atomic.hpp>
-#include <hyprgraphics/color/Color.hpp>
+#include <abyssutils/memory/WeakPtr.hpp>
+#include <abyssutils/memory/UniquePtr.hpp>
+#include <abyssutils/memory/Atomic.hpp>
+#include <abyssgraphics/color/Color.hpp>
 
-using namespace Hyprutils::Memory;
-using namespace Hyprgraphics;
+using namespace Abyssutils::Memory;
+using namespace Abyssgraphics;
 
 using ResourceID = size_t;
 

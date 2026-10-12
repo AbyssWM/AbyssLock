@@ -1,5 +1,5 @@
 #include "LockSurface.hpp"
-#include "hyprlock.hpp"
+#include "abysslock.hpp"
 #include "Egl.hpp"
 #include "../config/ConfigManager.hpp"
 #include "../core/AnimationManager.hpp"
@@ -18,13 +18,13 @@ CSessionLockSurface::~CSessionLockSurface() {
 }
 
 CSessionLockSurface::CSessionLockSurface(const SP<COutput>& pOutput) :
-    m_outputRef(pOutput), m_outputID(pOutput->m_ID), surface(makeShared<CCWlSurface>(g_pHyprlock->getCompositor()->sendCreateSurface())) {
+    m_outputRef(pOutput), m_outputID(pOutput->m_ID), surface(makeShared<CCWlSurface>(g_pAbysslock->getCompositor()->sendCreateSurface())) {
     RASSERT(surface, "Couldn't create wl_surface");
 
-    static const auto FRACTIONALSCALING = g_pConfigManager->getValue<Hyprlang::INT>("general:fractional_scaling");
+    static const auto FRACTIONALSCALING = g_pConfigManager->getValue<Abyssparse::INT>("general:fractional_scaling");
     const auto        ENABLE_FSV1       = *FRACTIONALSCALING == 1 || /* auto enable */ (*FRACTIONALSCALING == 2);
-    const auto        PFRACTIONALMGR    = g_pHyprlock->getFractionalMgr();
-    const auto        PVIEWPORTER       = g_pHyprlock->getViewporter();
+    const auto        PFRACTIONALMGR    = g_pAbysslock->getFractionalMgr();
+    const auto        PVIEWPORTER       = g_pAbysslock->getViewporter();
 
     if (ENABLE_FSV1 && PFRACTIONALMGR && PVIEWPORTER) {
         fractional = makeShared<CCWpFractionalScaleV1>(PFRACTIONALMGR->sendGetFractionalScale(surface->resource()));
@@ -47,7 +47,7 @@ CSessionLockSurface::CSessionLockSurface(const SP<COutput>& pOutput) :
     if (!PVIEWPORTER)
         Log::logger->log(Log::INFO, "No viewporter support! Oops, won't be able to scale!");
 
-    lockSurface = makeShared<CCExtSessionLockSurfaceV1>(g_pHyprlock->getSessionLock()->sendGetLockSurface(surface->resource(), pOutput->m_wlOutput->resource()));
+    lockSurface = makeShared<CCExtSessionLockSurfaceV1>(g_pAbysslock->getSessionLock()->sendGetLockSurface(surface->resource(), pOutput->m_wlOutput->resource()));
     RASSERT(lockSurface, "Couldn't create ext_session_lock_surface_v1");
 
     lockSurface->setConfigure([this](CCExtSessionLockSurfaceV1* r, uint32_t serial, uint32_t width, uint32_t height) { configure({(double)width, (double)height}, serial); });
@@ -142,7 +142,7 @@ void CSessionLockSurface::render() {
     const auto FEEDBACK = g_pRenderer->renderLock(*this);
     frameCallback       = makeShared<CCWlCallback>(surface->sendFrame());
     frameCallback->setDone([this](CCWlCallback* r, uint32_t frameTime) {
-        if (g_pHyprlock->isTerminating())
+        if (g_pAbysslock->isTerminating())
             return;
 
         if (Log::logger->verbose()) {
@@ -169,7 +169,7 @@ void CSessionLockSurface::render() {
 void CSessionLockSurface::onCallback() {
     frameCallback.reset();
 
-    if (needsFrame && !g_pHyprlock->isTerminating() && g_pEGL) {
+    if (needsFrame && !g_pAbysslock->isTerminating() && g_pEGL) {
         needsFrame = false;
         render();
     }

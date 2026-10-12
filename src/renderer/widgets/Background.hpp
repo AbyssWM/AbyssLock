@@ -6,7 +6,7 @@
 #include "../../helpers/Color.hpp"
 #include "../../core/Timer.hpp"
 #include "../Framebuffer.hpp"
-#include <hyprutils/math/Misc.hpp>
+#include <abyssutils/math/Misc.hpp>
 #include <string>
 #include <unordered_map>
 #include <any>
@@ -36,7 +36,7 @@ class CBackground : public IWidget {
     const CTexture& getPendingAssetTex() const;
     const CTexture& getScAssetTex() const;
 
-    void            renderRect(CHyprColor color);
+    void            renderRect(CAbyssColor color);
     void            renderToFB(const CTexture& text, CFramebuffer& fb, int passes, bool applyTransform = false);
 
     void            onReloadTimerUpdate();
@@ -62,7 +62,7 @@ class CBackground : public IWidget {
     std::string                     path = "";
 
     std::string                     outputPort;
-    Hyprutils::Math::eTransform     transform;
+    Abyssutils::Math::eTransform     transform;
 
     ResourceID                      resourceID      = 0;
     ResourceID                      scResourceID    = 0;
@@ -70,7 +70,7 @@ class CBackground : public IWidget {
 
     PHLANIMVAR<float>               crossFadeProgress;
 
-    CHyprColor                      color;
+    CAbyssColor                      color;
     ASP<CTexture>                   asset        = nullptr;
     ASP<CTexture>                   scAsset      = nullptr;
     ASP<CTexture>                   pendingAsset = nullptr;

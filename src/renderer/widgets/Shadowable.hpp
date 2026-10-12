@@ -24,7 +24,7 @@ class CShadowable {
     int          size   = 10;
     int          passes = 4;
     float        boostA = 1.0;
-    CHyprColor   color{0, 0, 0, 1.0};
+    CAbyssColor   color{0, 0, 0, 1.0};
     Vector2D     viewport;
 
     // to avoid recursive shadows

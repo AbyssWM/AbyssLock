@@ -1,10 +1,10 @@
 #include "Shape.hpp"
 #include "../Renderer.hpp"
 #include "../../config/ConfigDataValues.hpp"
-#include "../../core/hyprlock.hpp"
+#include "../../core/abysslock.hpp"
 #include "../../helpers/MiscFunctions.hpp"
 #include <cmath>
-#include <hyprlang.hpp>
+#include <abyssparse.hpp>
 #include <sys/types.h>
 
 void CShape::registerSelf(const ASP<CShape>& self) {
@@ -18,16 +18,16 @@ void CShape::configure(const std::unordered_map<std::string, std::any>& props, c
 
     try {
         size           = CLayoutValueData::fromAnyPv(props.at("size"))->getAbsolute(viewport);
-        rounding       = std::any_cast<Hyprlang::INT>(props.at("rounding"));
-        border         = std::any_cast<Hyprlang::INT>(props.at("border_size"));
-        color          = std::any_cast<Hyprlang::INT>(props.at("color"));
+        rounding       = std::any_cast<Abyssparse::INT>(props.at("rounding"));
+        border         = std::any_cast<Abyssparse::INT>(props.at("border_size"));
+        color          = std::any_cast<Abyssparse::INT>(props.at("color"));
         borderGrad     = *CGradientValueData::fromAnyPv(props.at("border_color"));
         pos            = CLayoutValueData::fromAnyPv(props.at("position"))->getAbsolute(viewport);
-        halign         = std::any_cast<Hyprlang::STRING>(props.at("halign"));
-        valign         = std::any_cast<Hyprlang::STRING>(props.at("valign"));
-        angle          = std::any_cast<Hyprlang::FLOAT>(props.at("rotate"));
-        xray           = std::any_cast<Hyprlang::INT>(props.at("xray"));
-        onclickCommand = std::any_cast<Hyprlang::STRING>(props.at("onclick"));
+        halign         = std::any_cast<Abyssparse::STRING>(props.at("halign"));
+        valign         = std::any_cast<Abyssparse::STRING>(props.at("valign"));
+        angle          = std::any_cast<Abyssparse::FLOAT>(props.at("rotate"));
+        xray           = std::any_cast<Abyssparse::INT>(props.at("xray"));
+        onclickCommand = std::any_cast<Abyssparse::STRING>(props.at("onclick"));
     } catch (const std::bad_any_cast& e) {
         RASSERT(false, "Failed to construct CShape: {}", e.what()); //
     } catch (const std::out_of_range& e) {
@@ -100,7 +100,7 @@ bool CShape::draw(const SRenderData& data) {
     texbox.round();
     texbox.rot = angle;
 
-    g_pRenderer->renderTexture(texbox, *tex, data.opacity, 0, HYPRUTILS_TRANSFORM_FLIPPED_180);
+    g_pRenderer->renderTexture(texbox, *tex, data.opacity, 0, ABYSSUTILS_TRANSFORM_FLIPPED_180);
 
     return data.opacity < 1.0;
 }

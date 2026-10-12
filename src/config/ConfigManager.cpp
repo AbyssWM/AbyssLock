@@ -3,61 +3,61 @@
 #include "../helpers/MiscFunctions.hpp"
 #include "../helpers/Log.hpp"
 #include "../core/AnimationManager.hpp"
-#include <hyprlang.hpp>
-#include <hyprutils/string/String.hpp>
-#include <hyprutils/path/Path.hpp>
+#include <abyssparse.hpp>
+#include <abyssutils/string/String.hpp>
+#include <abyssutils/path/Path.hpp>
 #include <filesystem>
 #include <glob.h>
 #include <cstring>
 #include <format>
 
-using namespace Hyprutils::String;
-using namespace Hyprutils::Animation;
+using namespace Abyssutils::String;
+using namespace Abyssutils::Animation;
 
 ICustomConfigValueData::~ICustomConfigValueData() {
     ; // empty
 }
 
-static Hyprlang::CParseResult handleSource(const char* c, const char* v) {
+static Abyssparse::CParseResult handleSource(const char* c, const char* v) {
     const std::string      VALUE   = v;
     const std::string      COMMAND = c;
 
     const auto             RESULT = g_pConfigManager->handleSource(COMMAND, VALUE);
 
-    Hyprlang::CParseResult result;
+    Abyssparse::CParseResult result;
     if (RESULT.has_value())
         result.setError(RESULT.value().c_str());
     return result;
 }
 
-static Hyprlang::CParseResult handleBezier(const char* c, const char* v) {
+static Abyssparse::CParseResult handleBezier(const char* c, const char* v) {
     const std::string      VALUE   = v;
     const std::string      COMMAND = c;
 
     const auto             RESULT = g_pConfigManager->handleBezier(COMMAND, VALUE);
 
-    Hyprlang::CParseResult result;
+    Abyssparse::CParseResult result;
     if (RESULT.has_value())
         result.setError(RESULT.value().c_str());
     return result;
 }
 
-static Hyprlang::CParseResult handleAnimation(const char* c, const char* v) {
+static Abyssparse::CParseResult handleAnimation(const char* c, const char* v) {
     const std::string      VALUE   = v;
     const std::string      COMMAND = c;
 
     const auto             RESULT = g_pConfigManager->handleAnimation(COMMAND, VALUE);
 
-    Hyprlang::CParseResult result;
+    Abyssparse::CParseResult result;
     if (RESULT.has_value())
         result.setError(RESULT.value().c_str());
     return result;
 }
 
-static Hyprlang::CParseResult configHandleLayoutOption(const char* v, void** data) {
+static Abyssparse::CParseResult configHandleLayoutOption(const char* v, void** data) {
     const std::string      VALUE = v;
 
-    Hyprlang::CParseResult result;
+    Abyssparse::CParseResult result;
 
     if (!*data)
         *data = new CLayoutValueData();
@@ -90,7 +90,7 @@ static Hyprlang::CParseResult configHandleLayoutOption(const char* v, void** dat
     }
 
     try {
-        DATA->m_vValues = Hyprutils::Math::Vector2D{std::stof(lhs), std::stof(rhs)};
+        DATA->m_vValues = Abyssutils::Math::Vector2D{std::stof(lhs), std::stof(rhs)};
     } catch (const std::exception&) {
         result.setError(std::format("invalid layout values: {}", VALUE).c_str());
         return result;
@@ -104,7 +104,7 @@ static void configHandleLayoutOptionDestroy(void** data) {
         delete reinterpret_cast<CLayoutValueData*>(*data);
 }
 
-static Hyprlang::CParseResult configHandleGradientSet(const char* VALUE, void** data) {
+static Abyssparse::CParseResult configHandleGradientSet(const char* VALUE, void** data) {
     const std::string V = VALUE;
 
     if (!*data)
@@ -174,7 +174,7 @@ static Hyprlang::CParseResult configHandleGradientSet(const char* VALUE, void** 
 
     DATA->updateColorsOk();
 
-    Hyprlang::CParseResult result;
+    Abyssparse::CParseResult result;
     if (!parseError.empty())
         result.setError(parseError.c_str());
 
@@ -187,7 +187,7 @@ static void configHandleGradientDestroy(void** data) {
 }
 
 static std::expected<std::string, std::string> getMainConfigPath() {
-    static const auto PATHS = Hyprutils::Path::findConfig("hyprlock");
+    static const auto PATHS = Abyssutils::Path::findConfig("abysslock");
     if (PATHS.first.has_value())
         return PATHS.first.value();
     else
@@ -215,143 +215,143 @@ std::expected<std::string, std::string> CConfigManager::resolveConfigPath(std::o
 
 CConfigManager::CConfigManager(const char* configPath) :
     m_configCurrentPath(configPath), m_config(configPath,
-                                              Hyprlang::SConfigOptions{
+                                              Abyssparse::SConfigOptions{
                                                   .throwAllErrors     = true,
                                                   .allowMissingConfig = false,
                                               }) {
     ;
 }
 
-inline static constexpr auto GRADIENTCONFIG = [](const char* default_value) -> Hyprlang::CUSTOMTYPE {
-    return Hyprlang::CUSTOMTYPE{&configHandleGradientSet, configHandleGradientDestroy, default_value};
+inline static constexpr auto GRADIENTCONFIG = [](const char* default_value) -> Abyssparse::CUSTOMTYPE {
+    return Abyssparse::CUSTOMTYPE{&configHandleGradientSet, configHandleGradientDestroy, default_value};
 };
 
-inline static constexpr auto LAYOUTCONFIG = [](const char* default_value) -> Hyprlang::CUSTOMTYPE {
-    return Hyprlang::CUSTOMTYPE{&configHandleLayoutOption, configHandleLayoutOptionDestroy, default_value};
+inline static constexpr auto LAYOUTCONFIG = [](const char* default_value) -> Abyssparse::CUSTOMTYPE {
+    return Abyssparse::CUSTOMTYPE{&configHandleLayoutOption, configHandleLayoutOptionDestroy, default_value};
 };
 
 void CConfigManager::init() {
 
 #define SHADOWABLE(name)                                                                                                                                                           \
-    m_config.addSpecialConfigValue(name, "shadow_size", Hyprlang::INT{3});                                                                                                         \
-    m_config.addSpecialConfigValue(name, "shadow_passes", Hyprlang::INT{0});                                                                                                       \
-    m_config.addSpecialConfigValue(name, "shadow_color", Hyprlang::INT{0xFF000000});                                                                                               \
-    m_config.addSpecialConfigValue(name, "shadow_boost", Hyprlang::FLOAT{1.2});
+    m_config.addSpecialConfigValue(name, "shadow_size", Abyssparse::INT{3});                                                                                                         \
+    m_config.addSpecialConfigValue(name, "shadow_passes", Abyssparse::INT{0});                                                                                                       \
+    m_config.addSpecialConfigValue(name, "shadow_color", Abyssparse::INT{0xFF000000});                                                                                               \
+    m_config.addSpecialConfigValue(name, "shadow_boost", Abyssparse::FLOAT{1.2});
 
-#define CLICKABLE(name) m_config.addSpecialConfigValue(name, "onclick", Hyprlang::STRING{""});
+#define CLICKABLE(name) m_config.addSpecialConfigValue(name, "onclick", Abyssparse::STRING{""});
 
-    m_config.addConfigValue("general:text_trim", Hyprlang::INT{1});
-    m_config.addConfigValue("general:hide_cursor", Hyprlang::INT{0});
-    m_config.addConfigValue("general:ignore_empty_input", Hyprlang::INT{0});
-    m_config.addConfigValue("general:immediate_render", Hyprlang::INT{0});
-    m_config.addConfigValue("general:fractional_scaling", Hyprlang::INT{2});
-    m_config.addConfigValue("general:screencopy_mode", Hyprlang::INT{0});
-    m_config.addConfigValue("general:fail_timeout", Hyprlang::INT{2000});
+    m_config.addConfigValue("general:text_trim", Abyssparse::INT{1});
+    m_config.addConfigValue("general:hide_cursor", Abyssparse::INT{0});
+    m_config.addConfigValue("general:ignore_empty_input", Abyssparse::INT{0});
+    m_config.addConfigValue("general:immediate_render", Abyssparse::INT{0});
+    m_config.addConfigValue("general:fractional_scaling", Abyssparse::INT{2});
+    m_config.addConfigValue("general:screencopy_mode", Abyssparse::INT{0});
+    m_config.addConfigValue("general:fail_timeout", Abyssparse::INT{2000});
 
-    m_config.addConfigValue("auth:pam:enabled", Hyprlang::INT{1});
-    m_config.addConfigValue("auth:pam:module", Hyprlang::STRING{"hyprlock"});
-    m_config.addConfigValue("auth:fingerprint:enabled", Hyprlang::INT{0});
-    m_config.addConfigValue("auth:fingerprint:ready_message", Hyprlang::STRING{"(Scan fingerprint to unlock)"});
-    m_config.addConfigValue("auth:fingerprint:present_message", Hyprlang::STRING{"Scanning fingerprint"});
-    m_config.addConfigValue("auth:fingerprint:retry_delay", Hyprlang::INT{250});
+    m_config.addConfigValue("auth:pam:enabled", Abyssparse::INT{1});
+    m_config.addConfigValue("auth:pam:module", Abyssparse::STRING{"abysslock"});
+    m_config.addConfigValue("auth:fingerprint:enabled", Abyssparse::INT{0});
+    m_config.addConfigValue("auth:fingerprint:ready_message", Abyssparse::STRING{"(Scan fingerprint to unlock)"});
+    m_config.addConfigValue("auth:fingerprint:present_message", Abyssparse::STRING{"Scanning fingerprint"});
+    m_config.addConfigValue("auth:fingerprint:retry_delay", Abyssparse::INT{250});
 
-    m_config.addConfigValue("animations:enabled", Hyprlang::INT{1});
+    m_config.addConfigValue("animations:enabled", Abyssparse::INT{1});
 
-    m_config.addSpecialCategory("background", Hyprlang::SSpecialCategoryOptions{.key = nullptr, .anonymousKeyBased = true});
-    m_config.addSpecialConfigValue("background", "monitor", Hyprlang::STRING{""});
-    m_config.addSpecialConfigValue("background", "path", Hyprlang::STRING{""});
-    m_config.addSpecialConfigValue("background", "color", Hyprlang::INT{0xFF111111});
-    m_config.addSpecialConfigValue("background", "blur_size", Hyprlang::INT{8});
-    m_config.addSpecialConfigValue("background", "blur_passes", Hyprlang::INT{0});
-    m_config.addSpecialConfigValue("background", "noise", Hyprlang::FLOAT{0.0117});
-    m_config.addSpecialConfigValue("background", "contrast", Hyprlang::FLOAT{0.8917});
-    m_config.addSpecialConfigValue("background", "brightness", Hyprlang::FLOAT{0.8172});
-    m_config.addSpecialConfigValue("background", "vibrancy", Hyprlang::FLOAT{0.1686});
-    m_config.addSpecialConfigValue("background", "vibrancy_darkness", Hyprlang::FLOAT{0.05});
-    m_config.addSpecialConfigValue("background", "zindex", Hyprlang::INT{-1});
-    m_config.addSpecialConfigValue("background", "reload_time", Hyprlang::INT{-1});
-    m_config.addSpecialConfigValue("background", "reload_cmd", Hyprlang::STRING{""});
-    m_config.addSpecialConfigValue("background", "crossfade_time", Hyprlang::FLOAT{-1.0});
+    m_config.addSpecialCategory("background", Abyssparse::SSpecialCategoryOptions{.key = nullptr, .anonymousKeyBased = true});
+    m_config.addSpecialConfigValue("background", "monitor", Abyssparse::STRING{""});
+    m_config.addSpecialConfigValue("background", "path", Abyssparse::STRING{""});
+    m_config.addSpecialConfigValue("background", "color", Abyssparse::INT{0xFF111111});
+    m_config.addSpecialConfigValue("background", "blur_size", Abyssparse::INT{8});
+    m_config.addSpecialConfigValue("background", "blur_passes", Abyssparse::INT{0});
+    m_config.addSpecialConfigValue("background", "noise", Abyssparse::FLOAT{0.0117});
+    m_config.addSpecialConfigValue("background", "contrast", Abyssparse::FLOAT{0.8917});
+    m_config.addSpecialConfigValue("background", "brightness", Abyssparse::FLOAT{0.8172});
+    m_config.addSpecialConfigValue("background", "vibrancy", Abyssparse::FLOAT{0.1686});
+    m_config.addSpecialConfigValue("background", "vibrancy_darkness", Abyssparse::FLOAT{0.05});
+    m_config.addSpecialConfigValue("background", "zindex", Abyssparse::INT{-1});
+    m_config.addSpecialConfigValue("background", "reload_time", Abyssparse::INT{-1});
+    m_config.addSpecialConfigValue("background", "reload_cmd", Abyssparse::STRING{""});
+    m_config.addSpecialConfigValue("background", "crossfade_time", Abyssparse::FLOAT{-1.0});
 
-    m_config.addSpecialCategory("shape", Hyprlang::SSpecialCategoryOptions{.key = nullptr, .anonymousKeyBased = true});
-    m_config.addSpecialConfigValue("shape", "monitor", Hyprlang::STRING{""});
+    m_config.addSpecialCategory("shape", Abyssparse::SSpecialCategoryOptions{.key = nullptr, .anonymousKeyBased = true});
+    m_config.addSpecialConfigValue("shape", "monitor", Abyssparse::STRING{""});
     m_config.addSpecialConfigValue("shape", "size", LAYOUTCONFIG("100,100"));
-    m_config.addSpecialConfigValue("shape", "rounding", Hyprlang::INT{0});
-    m_config.addSpecialConfigValue("shape", "border_size", Hyprlang::INT{0});
+    m_config.addSpecialConfigValue("shape", "rounding", Abyssparse::INT{0});
+    m_config.addSpecialConfigValue("shape", "border_size", Abyssparse::INT{0});
     m_config.addSpecialConfigValue("shape", "border_color", GRADIENTCONFIG("0xFF00CFE6"));
-    m_config.addSpecialConfigValue("shape", "color", Hyprlang::INT{0xFF111111});
+    m_config.addSpecialConfigValue("shape", "color", Abyssparse::INT{0xFF111111});
     m_config.addSpecialConfigValue("shape", "position", LAYOUTCONFIG("0,0"));
-    m_config.addSpecialConfigValue("shape", "halign", Hyprlang::STRING{"center"});
-    m_config.addSpecialConfigValue("shape", "valign", Hyprlang::STRING{"center"});
-    m_config.addSpecialConfigValue("shape", "rotate", Hyprlang::FLOAT{0});
-    m_config.addSpecialConfigValue("shape", "xray", Hyprlang::INT{0});
-    m_config.addSpecialConfigValue("shape", "zindex", Hyprlang::INT{0});
+    m_config.addSpecialConfigValue("shape", "halign", Abyssparse::STRING{"center"});
+    m_config.addSpecialConfigValue("shape", "valign", Abyssparse::STRING{"center"});
+    m_config.addSpecialConfigValue("shape", "rotate", Abyssparse::FLOAT{0});
+    m_config.addSpecialConfigValue("shape", "xray", Abyssparse::INT{0});
+    m_config.addSpecialConfigValue("shape", "zindex", Abyssparse::INT{0});
     SHADOWABLE("shape");
     CLICKABLE("shape");
 
-    m_config.addSpecialCategory("image", Hyprlang::SSpecialCategoryOptions{.key = nullptr, .anonymousKeyBased = true});
-    m_config.addSpecialConfigValue("image", "monitor", Hyprlang::STRING{""});
-    m_config.addSpecialConfigValue("image", "path", Hyprlang::STRING{""});
-    m_config.addSpecialConfigValue("image", "size", Hyprlang::INT{150});
-    m_config.addSpecialConfigValue("image", "rounding", Hyprlang::INT{-1});
-    m_config.addSpecialConfigValue("image", "border_size", Hyprlang::INT{4});
+    m_config.addSpecialCategory("image", Abyssparse::SSpecialCategoryOptions{.key = nullptr, .anonymousKeyBased = true});
+    m_config.addSpecialConfigValue("image", "monitor", Abyssparse::STRING{""});
+    m_config.addSpecialConfigValue("image", "path", Abyssparse::STRING{""});
+    m_config.addSpecialConfigValue("image", "size", Abyssparse::INT{150});
+    m_config.addSpecialConfigValue("image", "rounding", Abyssparse::INT{-1});
+    m_config.addSpecialConfigValue("image", "border_size", Abyssparse::INT{4});
     m_config.addSpecialConfigValue("image", "border_color", GRADIENTCONFIG("0xFFDDDDDD"));
     m_config.addSpecialConfigValue("image", "position", LAYOUTCONFIG("0,0"));
-    m_config.addSpecialConfigValue("image", "halign", Hyprlang::STRING{"center"});
-    m_config.addSpecialConfigValue("image", "valign", Hyprlang::STRING{"center"});
-    m_config.addSpecialConfigValue("image", "rotate", Hyprlang::FLOAT{0});
-    m_config.addSpecialConfigValue("image", "reload_time", Hyprlang::INT{-1});
-    m_config.addSpecialConfigValue("image", "reload_cmd", Hyprlang::STRING{""});
-    m_config.addSpecialConfigValue("image", "zindex", Hyprlang::INT{0});
+    m_config.addSpecialConfigValue("image", "halign", Abyssparse::STRING{"center"});
+    m_config.addSpecialConfigValue("image", "valign", Abyssparse::STRING{"center"});
+    m_config.addSpecialConfigValue("image", "rotate", Abyssparse::FLOAT{0});
+    m_config.addSpecialConfigValue("image", "reload_time", Abyssparse::INT{-1});
+    m_config.addSpecialConfigValue("image", "reload_cmd", Abyssparse::STRING{""});
+    m_config.addSpecialConfigValue("image", "zindex", Abyssparse::INT{0});
     SHADOWABLE("image");
     CLICKABLE("image");
 
-    m_config.addSpecialCategory("input-field", Hyprlang::SSpecialCategoryOptions{.key = nullptr, .anonymousKeyBased = true});
-    m_config.addSpecialConfigValue("input-field", "monitor", Hyprlang::STRING{""});
+    m_config.addSpecialCategory("input-field", Abyssparse::SSpecialCategoryOptions{.key = nullptr, .anonymousKeyBased = true});
+    m_config.addSpecialConfigValue("input-field", "monitor", Abyssparse::STRING{""});
     m_config.addSpecialConfigValue("input-field", "size", LAYOUTCONFIG("400,90"));
-    m_config.addSpecialConfigValue("input-field", "inner_color", Hyprlang::INT{0xFFDDDDDD});
+    m_config.addSpecialConfigValue("input-field", "inner_color", Abyssparse::INT{0xFFDDDDDD});
     m_config.addSpecialConfigValue("input-field", "outer_color", GRADIENTCONFIG("0xFF111111"));
-    m_config.addSpecialConfigValue("input-field", "outline_thickness", Hyprlang::INT{4});
-    m_config.addSpecialConfigValue("input-field", "dots_size", Hyprlang::FLOAT{0.25});
-    m_config.addSpecialConfigValue("input-field", "dots_center", Hyprlang::INT{1});
-    m_config.addSpecialConfigValue("input-field", "dots_spacing", Hyprlang::FLOAT{0.2});
-    m_config.addSpecialConfigValue("input-field", "dots_rounding", Hyprlang::INT{-1});
-    m_config.addSpecialConfigValue("input-field", "dots_text_format", Hyprlang::STRING{""});
-    m_config.addSpecialConfigValue("input-field", "fade_on_empty", Hyprlang::INT{1});
-    m_config.addSpecialConfigValue("input-field", "fade_timeout", Hyprlang::INT{2000});
-    m_config.addSpecialConfigValue("input-field", "font_color", Hyprlang::INT{0xFF000000});
-    m_config.addSpecialConfigValue("input-field", "font_family", Hyprlang::STRING{"Sans"});
-    m_config.addSpecialConfigValue("input-field", "halign", Hyprlang::STRING{"center"});
-    m_config.addSpecialConfigValue("input-field", "valign", Hyprlang::STRING{"center"});
+    m_config.addSpecialConfigValue("input-field", "outline_thickness", Abyssparse::INT{4});
+    m_config.addSpecialConfigValue("input-field", "dots_size", Abyssparse::FLOAT{0.25});
+    m_config.addSpecialConfigValue("input-field", "dots_center", Abyssparse::INT{1});
+    m_config.addSpecialConfigValue("input-field", "dots_spacing", Abyssparse::FLOAT{0.2});
+    m_config.addSpecialConfigValue("input-field", "dots_rounding", Abyssparse::INT{-1});
+    m_config.addSpecialConfigValue("input-field", "dots_text_format", Abyssparse::STRING{""});
+    m_config.addSpecialConfigValue("input-field", "fade_on_empty", Abyssparse::INT{1});
+    m_config.addSpecialConfigValue("input-field", "fade_timeout", Abyssparse::INT{2000});
+    m_config.addSpecialConfigValue("input-field", "font_color", Abyssparse::INT{0xFF000000});
+    m_config.addSpecialConfigValue("input-field", "font_family", Abyssparse::STRING{"Sans"});
+    m_config.addSpecialConfigValue("input-field", "halign", Abyssparse::STRING{"center"});
+    m_config.addSpecialConfigValue("input-field", "valign", Abyssparse::STRING{"center"});
     m_config.addSpecialConfigValue("input-field", "position", LAYOUTCONFIG("0,0"));
-    m_config.addSpecialConfigValue("input-field", "placeholder_text", Hyprlang::STRING{"<i>Input Password</i>"});
-    m_config.addSpecialConfigValue("input-field", "hide_input", Hyprlang::INT{0});
-    m_config.addSpecialConfigValue("input-field", "hide_input_base_color", Hyprlang::INT{0xEE00FF99});
-    m_config.addSpecialConfigValue("input-field", "rounding", Hyprlang::INT{-1});
+    m_config.addSpecialConfigValue("input-field", "placeholder_text", Abyssparse::STRING{"<i>Input Password</i>"});
+    m_config.addSpecialConfigValue("input-field", "hide_input", Abyssparse::INT{0});
+    m_config.addSpecialConfigValue("input-field", "hide_input_base_color", Abyssparse::INT{0xEE00FF99});
+    m_config.addSpecialConfigValue("input-field", "rounding", Abyssparse::INT{-1});
     m_config.addSpecialConfigValue("input-field", "check_color", GRADIENTCONFIG("0xFF22CC88"));
     m_config.addSpecialConfigValue("input-field", "fail_color", GRADIENTCONFIG("0xFFCC2222"));
-    m_config.addSpecialConfigValue("input-field", "fail_text", Hyprlang::STRING{"<i>$FAIL</i>"});
-    m_config.addSpecialConfigValue("input-field", "check_text", Hyprlang::STRING{""});
+    m_config.addSpecialConfigValue("input-field", "fail_text", Abyssparse::STRING{"<i>$FAIL</i>"});
+    m_config.addSpecialConfigValue("input-field", "check_text", Abyssparse::STRING{""});
     m_config.addSpecialConfigValue("input-field", "capslock_color", GRADIENTCONFIG(""));
     m_config.addSpecialConfigValue("input-field", "numlock_color", GRADIENTCONFIG(""));
     m_config.addSpecialConfigValue("input-field", "bothlock_color", GRADIENTCONFIG(""));
-    m_config.addSpecialConfigValue("input-field", "invert_numlock", Hyprlang::INT{0});
-    m_config.addSpecialConfigValue("input-field", "swap_font_color", Hyprlang::INT{0});
-    m_config.addSpecialConfigValue("input-field", "zindex", Hyprlang::INT{0});
+    m_config.addSpecialConfigValue("input-field", "invert_numlock", Abyssparse::INT{0});
+    m_config.addSpecialConfigValue("input-field", "swap_font_color", Abyssparse::INT{0});
+    m_config.addSpecialConfigValue("input-field", "zindex", Abyssparse::INT{0});
     SHADOWABLE("input-field");
 
-    m_config.addSpecialCategory("label", Hyprlang::SSpecialCategoryOptions{.key = nullptr, .anonymousKeyBased = true});
-    m_config.addSpecialConfigValue("label", "monitor", Hyprlang::STRING{""});
+    m_config.addSpecialCategory("label", Abyssparse::SSpecialCategoryOptions{.key = nullptr, .anonymousKeyBased = true});
+    m_config.addSpecialConfigValue("label", "monitor", Abyssparse::STRING{""});
     m_config.addSpecialConfigValue("label", "position", LAYOUTCONFIG("0,0"));
-    m_config.addSpecialConfigValue("label", "color", Hyprlang::INT{0xFFFFFFFF});
-    m_config.addSpecialConfigValue("label", "font_size", Hyprlang::INT{16});
-    m_config.addSpecialConfigValue("label", "text", Hyprlang::STRING{"Sample Text"});
-    m_config.addSpecialConfigValue("label", "font_family", Hyprlang::STRING{"Sans"});
-    m_config.addSpecialConfigValue("label", "halign", Hyprlang::STRING{"center"});
-    m_config.addSpecialConfigValue("label", "valign", Hyprlang::STRING{"center"});
-    m_config.addSpecialConfigValue("label", "rotate", Hyprlang::FLOAT{0});
-    m_config.addSpecialConfigValue("label", "text_align", Hyprlang::STRING{""});
-    m_config.addSpecialConfigValue("label", "zindex", Hyprlang::INT{0});
+    m_config.addSpecialConfigValue("label", "color", Abyssparse::INT{0xFFFFFFFF});
+    m_config.addSpecialConfigValue("label", "font_size", Abyssparse::INT{16});
+    m_config.addSpecialConfigValue("label", "text", Abyssparse::STRING{"Sample Text"});
+    m_config.addSpecialConfigValue("label", "font_family", Abyssparse::STRING{"Sans"});
+    m_config.addSpecialConfigValue("label", "halign", Abyssparse::STRING{"center"});
+    m_config.addSpecialConfigValue("label", "valign", Abyssparse::STRING{"center"});
+    m_config.addSpecialConfigValue("label", "rotate", Abyssparse::FLOAT{0});
+    m_config.addSpecialConfigValue("label", "text_align", Abyssparse::STRING{""});
+    m_config.addSpecialConfigValue("label", "zindex", Abyssparse::INT{0});
     SHADOWABLE("label");
     CLICKABLE("label");
 
@@ -410,7 +410,7 @@ std::vector<CConfigManager::SWidgetConfig> CConfigManager::getWidgetConfigs() {
         // clang-format off
         result.push_back(CConfigManager::SWidgetConfig{
             .type = "background",
-            .monitor = std::any_cast<Hyprlang::STRING>(m_config.getSpecialConfigValue("background", "monitor", k.c_str())),
+            .monitor = std::any_cast<Abyssparse::STRING>(m_config.getSpecialConfigValue("background", "monitor", k.c_str())),
             .values = {
                 {"path", m_config.getSpecialConfigValue("background", "path", k.c_str())},
                 {"color", m_config.getSpecialConfigValue("background", "color", k.c_str())},
@@ -436,7 +436,7 @@ std::vector<CConfigManager::SWidgetConfig> CConfigManager::getWidgetConfigs() {
         // clang-format off
         result.push_back(CConfigManager::SWidgetConfig{
             .type = "shape",
-            .monitor = std::any_cast<Hyprlang::STRING>(m_config.getSpecialConfigValue("shape", "monitor", k.c_str())),
+            .monitor = std::any_cast<Abyssparse::STRING>(m_config.getSpecialConfigValue("shape", "monitor", k.c_str())),
             .values = {
                 {"size", m_config.getSpecialConfigValue("shape", "size", k.c_str())},
                 {"rounding", m_config.getSpecialConfigValue("shape", "rounding", k.c_str())},
@@ -462,7 +462,7 @@ std::vector<CConfigManager::SWidgetConfig> CConfigManager::getWidgetConfigs() {
         // clang-format off
         result.push_back(CConfigManager::SWidgetConfig{
             .type = "image",
-            .monitor = std::any_cast<Hyprlang::STRING>(m_config.getSpecialConfigValue("image", "monitor", k.c_str())),
+            .monitor = std::any_cast<Abyssparse::STRING>(m_config.getSpecialConfigValue("image", "monitor", k.c_str())),
             .values = {
                 {"path", m_config.getSpecialConfigValue("image", "path", k.c_str())},
                 {"size", m_config.getSpecialConfigValue("image", "size", k.c_str())},
@@ -488,7 +488,7 @@ std::vector<CConfigManager::SWidgetConfig> CConfigManager::getWidgetConfigs() {
         // clang-format off
         result.push_back(CConfigManager::SWidgetConfig{
             .type = "input-field",
-            .monitor = std::any_cast<Hyprlang::STRING>(m_config.getSpecialConfigValue("input-field", "monitor", k.c_str())),
+            .monitor = std::any_cast<Abyssparse::STRING>(m_config.getSpecialConfigValue("input-field", "monitor", k.c_str())),
             .values = {
                 {"size", m_config.getSpecialConfigValue("input-field", "size", k.c_str())},
                 {"inner_color", m_config.getSpecialConfigValue("input-field", "inner_color", k.c_str())},
@@ -531,7 +531,7 @@ std::vector<CConfigManager::SWidgetConfig> CConfigManager::getWidgetConfigs() {
         // clang-format off
         result.push_back(CConfigManager::SWidgetConfig{
             .type = "label",
-            .monitor = std::any_cast<Hyprlang::STRING>(m_config.getSpecialConfigValue("label", "monitor", k.c_str())),
+            .monitor = std::any_cast<Abyssparse::STRING>(m_config.getSpecialConfigValue("label", "monitor", k.c_str())),
             .values = {
                 {"position", m_config.getSpecialConfigValue("label", "position", k.c_str())},
                 {"color", m_config.getSpecialConfigValue("label", "color", k.c_str())},
@@ -665,7 +665,7 @@ std::optional<std::string> CConfigManager::handleAnimation(const std::string& co
     }
 
     std::string bezierName = ARGS[3];
-    // ARGS[4] (style) currently usused by hyprlock
+    // ARGS[4] (style) currently usused by abysslock
     m_AnimationTree.setConfigForNode(ANIMNAME, enabledInt, speed, bezierName, "");
 
     if (!g_pAnimationManager->bezierExists(bezierName)) {

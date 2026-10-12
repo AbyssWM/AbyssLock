@@ -3,7 +3,7 @@
 #include "./resources/TextCmdResource.hpp"
 #include "../helpers/Log.hpp"
 #include "../helpers/MiscFunctions.hpp"
-#include "../core/hyprlock.hpp"
+#include "../core/abysslock.hpp"
 #include "../config/ConfigManager.hpp"
 #include "../core/Egl.hpp"
 
@@ -13,8 +13,8 @@
 #include <sys/eventfd.h>
 #include <sys/poll.h>
 
-using namespace Hyprgraphics;
-using namespace Hyprutils::OS;
+using namespace Abyssgraphics;
+using namespace Abyssutils::OS;
 
 static inline ResourceID scopeResourceID(uint8_t scope, size_t in) {
     return (in & ~0x0f) | scope;
@@ -99,7 +99,7 @@ void CAsyncResourceManager::enqueueStaticAssets() {
 
     for (auto& c : CWIDGETS) {
         if (c.type == "background" || c.type == "image") {
-            std::string path = std::any_cast<Hyprlang::STRING>(c.values.at("path"));
+            std::string path = std::any_cast<Abyssparse::STRING>(c.values.at("path"));
 
             if (path.empty() || path == "screenshot")
                 continue;
@@ -110,10 +110,10 @@ void CAsyncResourceManager::enqueueStaticAssets() {
 }
 
 void CAsyncResourceManager::enqueueScreencopyFrames() {
-    if (g_pHyprlock->m_vOutputs.empty())
+    if (g_pAbysslock->m_vOutputs.empty())
         return;
 
-    for (const auto& MON : g_pHyprlock->m_vOutputs) {
+    for (const auto& MON : g_pAbysslock->m_vOutputs) {
         m_scFrames.emplace_back(makeUnique<CScreencopyFrame>());
         auto* frame = m_scFrames.back().get();
         frame->capture(MON);
@@ -135,7 +135,7 @@ void CAsyncResourceManager::screencopyToTexture(const CScreencopyFrame& scFrame)
 
     if (m_scFrames.empty()) {
         Log::logger->log(Log::INFO, "Gathered all screencopy frames - removing dmabuf listeners");
-        g_pHyprlock->removeDmabufListener();
+        g_pAbysslock->removeDmabufListener();
     }
 }
 
@@ -177,7 +177,7 @@ void CAsyncResourceManager::gatherInitialResources(wl_display* display) {
             wl_display_dispatch(display);
         }
 
-        g_pHyprlock->processTimers();
+        g_pAbysslock->processTimers();
 
         if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - STARTGATHERTP).count() > MAXDELAYMS) {
             Log::logger->log(Log::WARN, "Gathering resources timed out after {} milliseconds. Backgrounds may be delayed and render `background:color` at first.", MAXDELAYMS);
@@ -236,7 +236,7 @@ bool CAsyncResourceManager::request(ResourceID id, const AWP<IWidget>& widget) {
             w->onAssetUpdate(id, TEXTURE);
 
             // TODO: add a centalized mechanism to render in one place in the event loop to avoid duplicate render calls
-            g_pHyprlock->addTimer(std::chrono::milliseconds(0), [](auto, auto) { g_pHyprlock->renderAllOutputs(); }, nullptr);
+            g_pAbysslock->addTimer(std::chrono::milliseconds(0), [](auto, auto) { g_pAbysslock->renderAllOutputs(); }, nullptr);
         }
     } else if (widget) {
         // Asset currently in-flight. Add the widget reference to in order for the callback to get dispatched later.
@@ -264,10 +264,10 @@ void CAsyncResourceManager::enqueue(ResourceID resourceID, const ASP<IAsyncResou
     m_resourcesMutex.unlock();
 
     resource->m_events.finished.listenStatic([resourceID]() {
-        if (!g_pHyprlock)
+        if (!g_pAbysslock)
             return;
 
-        g_pHyprlock->addTimer(
+        g_pAbysslock->addTimer(
             std::chrono::milliseconds(0),
             [](auto, void* resourceID) {
                 if (g_asyncResourceManager)
@@ -331,9 +331,9 @@ void CAsyncResourceManager::onResourceFinished(ResourceID id) {
             w->onAssetUpdate(id, texture);
     }
 
-    g_pHyprlock->renderAllOutputs();
+    g_pAbysslock->renderAllOutputs();
 
-    if (!m_gathered && !g_pHyprlock->m_bImmediateRender) {
+    if (!m_gathered && !g_pAbysslock->m_bImmediateRender) {
         m_resourcesMutex.lock();
         if (m_resources.empty()) {
             m_gathered = true;

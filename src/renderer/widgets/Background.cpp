@@ -2,13 +2,13 @@
 #include "../Renderer.hpp"
 #include "../AsyncResourceManager.hpp"
 #include "../Framebuffer.hpp"
-#include "../../core/hyprlock.hpp"
+#include "../../core/abysslock.hpp"
 #include "../../helpers/Log.hpp"
 #include "../../helpers/MiscFunctions.hpp"
 #include "../../core/AnimationManager.hpp"
 #include "../../config/ConfigManager.hpp"
 #include <chrono>
-#include <hyprlang.hpp>
+#include <abyssparse.hpp>
 #include <filesystem>
 #include <GLES3/gl32.h>
 
@@ -44,17 +44,17 @@ void CBackground::configure(const std::unordered_map<std::string, std::any>& pro
     reset();
 
     try {
-        color             = std::any_cast<Hyprlang::INT>(props.at("color"));
-        blurPasses        = std::any_cast<Hyprlang::INT>(props.at("blur_passes"));
-        blurSize          = std::any_cast<Hyprlang::INT>(props.at("blur_size"));
-        vibrancy          = std::any_cast<Hyprlang::FLOAT>(props.at("vibrancy"));
-        vibrancy_darkness = std::any_cast<Hyprlang::FLOAT>(props.at("vibrancy_darkness"));
-        noise             = std::any_cast<Hyprlang::FLOAT>(props.at("noise"));
-        brightness        = std::any_cast<Hyprlang::FLOAT>(props.at("brightness"));
-        contrast          = std::any_cast<Hyprlang::FLOAT>(props.at("contrast"));
-        path              = std::any_cast<Hyprlang::STRING>(props.at("path"));
-        reloadCommand     = std::any_cast<Hyprlang::STRING>(props.at("reload_cmd"));
-        reloadTime        = std::any_cast<Hyprlang::INT>(props.at("reload_time"));
+        color             = std::any_cast<Abyssparse::INT>(props.at("color"));
+        blurPasses        = std::any_cast<Abyssparse::INT>(props.at("blur_passes"));
+        blurSize          = std::any_cast<Abyssparse::INT>(props.at("blur_size"));
+        vibrancy          = std::any_cast<Abyssparse::FLOAT>(props.at("vibrancy"));
+        vibrancy_darkness = std::any_cast<Abyssparse::FLOAT>(props.at("vibrancy_darkness"));
+        noise             = std::any_cast<Abyssparse::FLOAT>(props.at("noise"));
+        brightness        = std::any_cast<Abyssparse::FLOAT>(props.at("brightness"));
+        contrast          = std::any_cast<Abyssparse::FLOAT>(props.at("contrast"));
+        path              = std::any_cast<Abyssparse::STRING>(props.at("path"));
+        reloadCommand     = std::any_cast<Abyssparse::STRING>(props.at("reload_cmd"));
+        reloadTime        = std::any_cast<Abyssparse::INT>(props.at("reload_time"));
 
     } catch (const std::bad_any_cast& e) {
         RASSERT(false, "Failed to construct CBackground: {}", e.what()); //
@@ -66,7 +66,7 @@ void CBackground::configure(const std::unordered_map<std::string, std::any>& pro
 
     viewport     = pOutput->getViewport();
     outputPort   = pOutput->stringPort;
-    transform    = wlTransformToHyprutils(invertTransform(pOutput->transform));
+    transform    = wlTransformToAbyssutils(invertTransform(pOutput->transform));
     scResourceID = CAsyncResourceManager::resourceIDForScreencopy(pOutput->stringPort);
 
     g_pAnimationManager->createAnimation(0.f, crossFadeProgress, g_pConfigManager->m_AnimationTree.getConfig("fadeIn"));
@@ -82,7 +82,7 @@ void CBackground::configure(const std::unordered_map<std::string, std::any>& pro
     if (isScreenshot) {
         resourceID = scResourceID; // Fallback to solid background:color when scResourceID==0
 
-        if (!g_pHyprlock->getScreencopy()) {
+        if (!g_pAbysslock->getScreencopy()) {
             Log::logger->log(Log::ERR, "No screencopy support! path=screenshot won't work. Falling back to background color.");
             resourceID = 0;
         }
@@ -117,7 +117,7 @@ void CBackground::updatePrimaryAsset() {
     if (!asset)
         return;
 
-    const bool NEEDFB = (isScreenshot || blurPasses > 0 || asset->m_vSize != viewport || transform != HYPRUTILS_TRANSFORM_NORMAL) && (!blurredFB->isAllocated() || firstRender);
+    const bool NEEDFB = (isScreenshot || blurPasses > 0 || asset->m_vSize != viewport || transform != ABYSSUTILS_TRANSFORM_NORMAL) && (!blurredFB->isAllocated() || firstRender);
     if (NEEDFB)
         renderToFB(*asset, *blurredFB, blurPasses, isScreenshot);
 }
@@ -139,7 +139,7 @@ void CBackground::updateScAsset() {
     if (!scAsset)
         return;
 
-    const bool NEEDSCTRANSFORM = transform != HYPRUTILS_TRANSFORM_NORMAL;
+    const bool NEEDSCTRANSFORM = transform != ABYSSUTILS_TRANSFORM_NORMAL;
     if (NEEDSCTRANSFORM)
         renderToFB(*scAsset, *transformedScFB, 0, true);
 }
@@ -160,7 +160,7 @@ const CTexture& CBackground::getScAssetTex() const {
     return (transformedScFB->isAllocated()) ? transformedScFB->m_cTex : *scAsset;
 }
 
-void CBackground::renderRect(CHyprColor color) {
+void CBackground::renderRect(CAbyssColor color) {
     CBox monbox = {0, 0, viewport.x, viewport.y};
     g_pRenderer->renderRect(monbox, color, 0);
 }
@@ -208,7 +208,7 @@ void CBackground::renderToFB(const CTexture& tex, CFramebuffer& fb, int passes, 
 
     fb.bind();
 
-    g_pRenderer->renderTexture(TEXBOX, tex, 1.0, 0, applyTransform ? transform : HYPRUTILS_TRANSFORM_NORMAL);
+    g_pRenderer->renderTexture(TEXBOX, tex, 1.0, 0, applyTransform ? transform : ABYSSUTILS_TRANSFORM_NORMAL);
 
     if (blurPasses > 0)
         g_pRenderer->blurFB(fb,
@@ -241,8 +241,8 @@ bool CBackground::draw(const SRenderData& data) {
         if (data.opacity < 1.0 && scAsset) {
             const auto& SCTEX    = getScAssetTex();
             const auto  SCTEXBOX = getScaledBoxForTextureSize(SCTEX.m_vSize, viewport);
-            g_pRenderer->renderTexture(SCTEXBOX, SCTEX, 1, 0, HYPRUTILS_TRANSFORM_FLIPPED_180);
-            CHyprColor col = color;
+            g_pRenderer->renderTexture(SCTEXBOX, SCTEX, 1, 0, ABYSSUTILS_TRANSFORM_FLIPPED_180);
+            CAbyssColor col = color;
             col.a *= data.opacity;
             renderRect(col);
             return true;
@@ -300,9 +300,9 @@ void CBackground::onAssetUpdate(ResourceID id, ASP<CTexture> newAsset) {
 void CBackground::plantReloadTimer() {
 
     if (reloadTime == 0)
-        reloadTimer = g_pHyprlock->addTimer(std::chrono::hours(1), [REF = m_self](auto, auto) { onReloadTimer(REF); }, nullptr, true);
+        reloadTimer = g_pAbysslock->addTimer(std::chrono::hours(1), [REF = m_self](auto, auto) { onReloadTimer(REF); }, nullptr, true);
     else if (reloadTime > 0)
-        reloadTimer = g_pHyprlock->addTimer(std::chrono::seconds(reloadTime), [REF = m_self](auto, auto) { onReloadTimer(REF); }, nullptr, true);
+        reloadTimer = g_pAbysslock->addTimer(std::chrono::seconds(reloadTime), [REF = m_self](auto, auto) { onReloadTimer(REF); }, nullptr, true);
 }
 
 void CBackground::onReloadTimerUpdate() {

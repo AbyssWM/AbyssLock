@@ -3,16 +3,16 @@
 
 #include "../../config/ConfigManager.hpp"
 #include "../../helpers/MiscFunctions.hpp"
-#include <hyprgraphics/resource/resources/TextResource.hpp>
+#include <abyssgraphics/resource/resources/TextResource.hpp>
 
-using namespace Hyprgraphics;
+using namespace Abyssgraphics;
 
 CTextCmdResource::CTextCmdResource(CTextResource::STextResourceData&& data) : m_data(std::move(data)) {
     ;
 }
 
 void CTextCmdResource::render() {
-    static const auto                TRIM = g_pConfigManager->getValue<Hyprlang::INT>("general:text_trim");
+    static const auto                TRIM = g_pConfigManager->getValue<Abyssparse::INT>("general:text_trim");
 
     CTextResource::STextResourceData textData = m_data;
 
@@ -23,7 +23,7 @@ void CTextCmdResource::render() {
         textData.text.erase(textData.text.find_last_not_of(" \n\r\t") + 1);
     }
 
-    Hyprgraphics::CTextResource textResource(std::move(textData));
+    Abyssgraphics::CTextResource textResource(std::move(textData));
 
     textResource.render();
 

@@ -4,8 +4,8 @@
 #include "IWidget.hpp"
 #include "Shadowable.hpp"
 #include "../../core/Timer.hpp"
-#include <hyprgraphics/resource/resources/AsyncResource.hpp>
-#include <hyprgraphics/resource/resources/TextResource.hpp>
+#include <abyssgraphics/resource/resources/AsyncResource.hpp>
+#include <abyssgraphics/resource/resources/TextResource.hpp>
 #include <string>
 #include <unordered_map>
 #include <any>
@@ -58,7 +58,7 @@ class CLabel : public IWidget {
 
     std::string                                    outputStringPort;
 
-    Hyprgraphics::CTextResource::STextResourceData request;
+    Abyssgraphics::CTextResource::STextResourceData request;
 
     ASP<CTimer>                                    labelTimer = nullptr;
 

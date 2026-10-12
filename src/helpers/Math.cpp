@@ -1,18 +1,18 @@
 #include "Math.hpp"
 
-Hyprutils::Math::eTransform wlTransformToHyprutils(wl_output_transform t) {
+Abyssutils::Math::eTransform wlTransformToAbyssutils(wl_output_transform t) {
     switch (t) {
-        case WL_OUTPUT_TRANSFORM_NORMAL: return Hyprutils::Math::eTransform::HYPRUTILS_TRANSFORM_NORMAL;
-        case WL_OUTPUT_TRANSFORM_180: return Hyprutils::Math::eTransform::HYPRUTILS_TRANSFORM_180;
-        case WL_OUTPUT_TRANSFORM_90: return Hyprutils::Math::eTransform::HYPRUTILS_TRANSFORM_90;
-        case WL_OUTPUT_TRANSFORM_270: return Hyprutils::Math::eTransform::HYPRUTILS_TRANSFORM_270;
-        case WL_OUTPUT_TRANSFORM_FLIPPED: return Hyprutils::Math::eTransform::HYPRUTILS_TRANSFORM_FLIPPED;
-        case WL_OUTPUT_TRANSFORM_FLIPPED_180: return Hyprutils::Math::eTransform::HYPRUTILS_TRANSFORM_FLIPPED_180;
-        case WL_OUTPUT_TRANSFORM_FLIPPED_270: return Hyprutils::Math::eTransform::HYPRUTILS_TRANSFORM_FLIPPED_270;
-        case WL_OUTPUT_TRANSFORM_FLIPPED_90: return Hyprutils::Math::eTransform::HYPRUTILS_TRANSFORM_FLIPPED_90;
+        case WL_OUTPUT_TRANSFORM_NORMAL: return Abyssutils::Math::eTransform::ABYSSUTILS_TRANSFORM_NORMAL;
+        case WL_OUTPUT_TRANSFORM_180: return Abyssutils::Math::eTransform::ABYSSUTILS_TRANSFORM_180;
+        case WL_OUTPUT_TRANSFORM_90: return Abyssutils::Math::eTransform::ABYSSUTILS_TRANSFORM_90;
+        case WL_OUTPUT_TRANSFORM_270: return Abyssutils::Math::eTransform::ABYSSUTILS_TRANSFORM_270;
+        case WL_OUTPUT_TRANSFORM_FLIPPED: return Abyssutils::Math::eTransform::ABYSSUTILS_TRANSFORM_FLIPPED;
+        case WL_OUTPUT_TRANSFORM_FLIPPED_180: return Abyssutils::Math::eTransform::ABYSSUTILS_TRANSFORM_FLIPPED_180;
+        case WL_OUTPUT_TRANSFORM_FLIPPED_270: return Abyssutils::Math::eTransform::ABYSSUTILS_TRANSFORM_FLIPPED_270;
+        case WL_OUTPUT_TRANSFORM_FLIPPED_90: return Abyssutils::Math::eTransform::ABYSSUTILS_TRANSFORM_FLIPPED_90;
         default: break;
     }
-    return Hyprutils::Math::eTransform::HYPRUTILS_TRANSFORM_NORMAL;
+    return Abyssutils::Math::eTransform::ABYSSUTILS_TRANSFORM_NORMAL;
 }
 
 wl_output_transform invertTransform(wl_output_transform tr) {

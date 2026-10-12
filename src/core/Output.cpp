@@ -1,6 +1,6 @@
 #include "Output.hpp"
 #include "../helpers/Log.hpp"
-#include "hyprlock.hpp"
+#include "abysslock.hpp"
 
 void COutput::create(WP<COutput> pSelf, SP<CCWlOutput> pWlOutput, uint32_t _name) {
     m_ID       = _name;
@@ -23,7 +23,7 @@ void COutput::create(WP<COutput> pSelf, SP<CCWlOutput> pWlOutput, uint32_t _name
     m_wlOutput->setDone([this](CCWlOutput* r) {
         done = true;
         Log::logger->log(Log::INFO, "output {} done", m_ID);
-        if (g_pHyprlock->isLockAquired() && !m_sessionLockSurface) {
+        if (g_pAbysslock->isLockAquired() && !m_sessionLockSurface) {
             Log::logger->log(Log::INFO, "output {} creating a new lock surface", m_ID);
             createSessionLockSurface();
         }

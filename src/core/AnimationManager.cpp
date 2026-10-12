@@ -3,7 +3,7 @@
 #include "../config/ConfigDataValues.hpp"
 #include "../config/ConfigManager.hpp"
 
-CHyprlockAnimationManager::CHyprlockAnimationManager() {
+CAbysslockAnimationManager::CAbysslockAnimationManager() {
     addBezierWithName("linear", {0, 0}, {1, 1});
 }
 
@@ -18,7 +18,7 @@ void updateVariable(CAnimatedVariable<VarType>& av, const float POINTY, bool war
     av.value()       = av.begun() + DELTA * POINTY;
 }
 
-void updateColorVariable(CAnimatedVariable<CHyprColor>& av, const float POINTY, bool warp = false) {
+void updateColorVariable(CAnimatedVariable<CAbyssColor>& av, const float POINTY, bool warp = false) {
     if (warp || !av.enabled() || av.value() == av.goal()) {
         av.warp(true, false);
         return;
@@ -26,14 +26,14 @@ void updateColorVariable(CAnimatedVariable<CHyprColor>& av, const float POINTY, 
 
     // convert both to OkLab, then lerp that, and convert back.
     // This is not as fast as just lerping rgb, but it's WAY more precise...
-    // Use the CHyprColor cache for OkLab
+    // Use the CAbyssColor cache for OkLab
 
     const auto&                L1 = av.begun().asOkLab();
     const auto&                L2 = av.goal().asOkLab();
 
     static const auto          lerp = [](const float one, const float two, const float progress) -> float { return one + ((two - one) * progress); };
 
-    const Hyprgraphics::CColor lerped = Hyprgraphics::CColor::SOkLab{
+    const Abyssgraphics::CColor lerped = Abyssgraphics::CColor::SOkLab{
         .l = lerp(L1.l, L2.l, POINTY),
         .a = lerp(L1.a, L2.a, POINTY),
         .b = lerp(L1.b, L2.b, POINTY),
@@ -51,15 +51,15 @@ void updateGradientVariable(CAnimatedVariable<CGradientValueData>& av, const flo
     av.value().m_vColors.resize(av.goal().m_vColors.size(), av.goal().m_vColors.back());
 
     for (size_t i = 0; i < av.value().m_vColors.size(); ++i) {
-        const CHyprColor&          sourceCol = (i < av.begun().m_vColors.size()) ? av.begun().m_vColors[i] : av.begun().m_vColors.back();
-        const CHyprColor&          targetCol = (i < av.goal().m_vColors.size()) ? av.goal().m_vColors[i] : av.goal().m_vColors.back();
+        const CAbyssColor&          sourceCol = (i < av.begun().m_vColors.size()) ? av.begun().m_vColors[i] : av.begun().m_vColors.back();
+        const CAbyssColor&          targetCol = (i < av.goal().m_vColors.size()) ? av.goal().m_vColors[i] : av.goal().m_vColors.back();
 
         const auto&                L1 = sourceCol.asOkLab();
         const auto&                L2 = targetCol.asOkLab();
 
         static const auto          lerp = [](const float one, const float two, const float progress) -> float { return one + ((two - one) * progress); };
 
-        const Hyprgraphics::CColor lerped = Hyprgraphics::CColor::SOkLab{
+        const Abyssgraphics::CColor lerped = Abyssgraphics::CColor::SOkLab{
             .l = lerp(L1.l, L2.l, POINTY),
             .a = lerp(L1.a, L2.a, POINTY),
             .b = lerp(L1.b, L2.b, POINTY),
@@ -76,8 +76,8 @@ void updateGradientVariable(CAnimatedVariable<CGradientValueData>& av, const flo
     av.value().updateColorsOk();
 }
 
-void CHyprlockAnimationManager::tick() {
-    static const auto ANIMATIONSENABLED = g_pConfigManager->getValue<Hyprlang::INT>("animations:enabled");
+void CAbysslockAnimationManager::tick() {
+    static const auto ANIMATIONSENABLED = g_pConfigManager->getValue<Abyssparse::INT>("animations:enabled");
     const auto        CPY               = m_vActiveAnimatedVariables;
 
     for (const auto& PAV : CPY) {
@@ -101,8 +101,8 @@ void CHyprlockAnimationManager::tick() {
                 updateVariable(*pTypedAV, POINTY, WARP);
             } break;
             case AVARTYPE_COLOR: {
-                auto pTypedAV = dynamic_cast<CAnimatedVariable<CHyprColor>*>(PAV.get());
-                RASSERT(pTypedAV, "Failed to upcast animated CHyprColor");
+                auto pTypedAV = dynamic_cast<CAnimatedVariable<CAbyssColor>*>(PAV.get());
+                RASSERT(pTypedAV, "Failed to upcast animated CAbyssColor");
                 updateColorVariable(*pTypedAV, POINTY, WARP);
             } break;
             case AVARTYPE_GRADIENT: {
@@ -119,10 +119,10 @@ void CHyprlockAnimationManager::tick() {
     tickDone();
 }
 
-void CHyprlockAnimationManager::scheduleTick() {
+void CAbysslockAnimationManager::scheduleTick() {
     m_bTickScheduled = true;
 }
 
-void CHyprlockAnimationManager::onTicked() {
+void CAbysslockAnimationManager::onTicked() {
     m_bTickScheduled = false;
 }

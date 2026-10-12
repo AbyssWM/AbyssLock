@@ -4,19 +4,19 @@ file(READ "${CMAKE_SOURCE_DIR}/VERSION" VER_RAW)
 string(STRIP ${VER_RAW} VERSION)
 
 project(
-  hyprlock
-  DESCRIPTION "A gpu-accelerated screen lock for Hyprland"
+  abysslock
+  DESCRIPTION "A gpu-accelerated screen lock for Abyssland"
   VERSION ${VERSION})
 
 set(CMAKE_MESSAGE_LOG_LEVEL "STATUS")
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 if(CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES DEBUG)
-  message(STATUS "Configuring hyprlock in Debug with CMake")
-  add_compile_definitions(HYPRLAND_DEBUG)
+  message(STATUS "Configuring abysslock in Debug with CMake")
+  add_compile_definitions(ABYSSLAND_DEBUG)
 else()
   add_compile_options(-O3)
-  message(STATUS "Configuring hyprlock in Release with CMake")
+  message(STATUS "Configuring abysslock in Release with CMake")
 endif()
 
 include_directories(. "protocols/")
@@ -31,10 +31,10 @@ add_compile_options(-Wall -Wextra -Wno-unused-parameter -Wno-unused-value
 
 
 
-add_compile_definitions(HYPRLOCK_VERSION="${VERSION}")
+add_compile_definitions(ABYSSLOCK_VERSION="${VERSION}")
 
-if (DEFINED HYPRLOCK_COMMIT)
-  add_compile_definitions(HYPRLOCK_COMMIT="${HYPRLOCK_COMMIT}")
+if (DEFINED ABYSSLOCK_COMMIT)
+  add_compile_definitions(ABYSSLOCK_COMMIT="${ABYSSLOCK_COMMIT}")
 else()
   # get git commit
   execute_process(
@@ -43,11 +43,11 @@ else()
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMAND git rev-parse --short HEAD
   )
-  add_compile_definitions(HYPRLOCK_COMMIT="${GIT_SHORT_HASH}")
+  add_compile_definitions(ABYSSLOCK_COMMIT="${GIT_SHORT_HASH}")
 endif()
 
-if (DEFINED HYPRLOCK_VERSION_COMMIT)
-  add_compile_definitions(HYPRLOCK_VERSION_COMMIT="${HYPRLOCK_VERSION_COMMIT}")
+if (DEFINED ABYSSLOCK_VERSION_COMMIT)
+  add_compile_definitions(ABYSSLOCK_VERSION_COMMIT="${ABYSSLOCK_VERSION_COMMIT}")
 else()
   # get git commit of v$VERSION
   execute_process(
@@ -56,11 +56,11 @@ else()
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMAND git rev-parse --short v${VERSION}
   )
-  add_compile_definitions(HYPRLOCK_VERSION_COMMIT="${GIT_TAG_SHORT_HASH}")
+  add_compile_definitions(ABYSSLOCK_VERSION_COMMIT="${GIT_TAG_SHORT_HASH}")
 endif()
 
-message(STATUS "VERSION COMMIT: ${HYPRLOCK_VERSION_COMMIT}")
-message(STATUS "COMMIT: ${HYPRLOCK_COMMIT}")
+message(STATUS "VERSION COMMIT: ${ABYSSLOCK_VERSION_COMMIT}")
+message(STATUS "COMMIT: ${ABYSSLOCK_COMMIT}")
 
 # position independent build: __FILE__
 add_compile_options(-fmacro-prefix-map=${CMAKE_SOURCE_DIR}/=)
@@ -71,7 +71,7 @@ message(STATUS "Checking deps...")
 find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
 find_package(OpenGL REQUIRED COMPONENTS EGL GLES3)
-find_package(hyprwayland-scanner 0.4.4 REQUIRED)
+find_package(abyss-scanner 0.4.4 REQUIRED)
 pkg_check_modules(
   deps
   REQUIRED
@@ -79,16 +79,16 @@ pkg_check_modules(
   wayland-client
   wayland-protocols>=1.35
   wayland-egl
-  hyprlang>=0.6.0
+  abyssparse>=0.6.0
   egl
   xkbcommon
   cairo
   pangocairo
   libdrm
   gbm
-  hyprutils>=0.11.0
+  abyssutils>=0.11.0
   sdbus-c++>=2.0.0
-  hyprgraphics>=0.1.6)
+  abyssgraphics>=0.1.6)
 find_library(PAM_FOUND NAMES pam libpam)
 if(PAM_FOUND)
   set(PAM_LIB ${PAM_FOUND})
@@ -109,8 +109,8 @@ endif()
 message(STATUS "Found pam at ${PAM_LIB}")
 
 file(GLOB_RECURSE SRCFILES CONFIGURE_DEPENDS "src/*.cpp")
-add_executable(hyprlock ${SRCFILES})
-target_link_libraries(hyprlock PRIVATE ${PAM_LIB} rt Threads::Threads PkgConfig::deps
+add_executable(abysslock ${SRCFILES})
+target_link_libraries(abysslock PRIVATE ${PAM_LIB} rt Threads::Threads PkgConfig::deps
                                        OpenGL::EGL OpenGL::GLES3)
 
 # protocols
@@ -129,20 +129,20 @@ function(protocolnew protoPath protoName external)
   add_custom_command(
     OUTPUT ${CMAKE_SOURCE_DIR}/protocols/${protoName}.cpp
            ${CMAKE_SOURCE_DIR}/protocols/${protoName}.hpp
-    COMMAND hyprwayland-scanner --client ${path}/${protoName}.xml
+    COMMAND abyss-scanner --client ${path}/${protoName}.xml
             ${CMAKE_SOURCE_DIR}/protocols/
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-  target_sources(hyprlock PRIVATE protocols/${protoName}.cpp
+  target_sources(abysslock PRIVATE protocols/${protoName}.cpp
                                    protocols/${protoName}.hpp)
 endfunction()
 function(protocolWayland)
   add_custom_command(
     OUTPUT ${CMAKE_SOURCE_DIR}/protocols/wayland.cpp
            ${CMAKE_SOURCE_DIR}/protocols/wayland.hpp
-    COMMAND hyprwayland-scanner --wayland-enums --client
+    COMMAND abyss-scanner --wayland-enums --client
             ${WAYLAND_SCANNER_PKGDATA_DIR}/wayland.xml ${CMAKE_SOURCE_DIR}/protocols/
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-  target_sources(hyprlock PRIVATE protocols/wayland.cpp protocols/wayland.hpp)
+  target_sources(abysslock PRIVATE protocols/wayland.cpp protocols/wayland.hpp)
 endfunction()
 
 make_directory(${CMAKE_SOURCE_DIR}/protocols) # we don't ship any custom ones so
@@ -159,12 +159,12 @@ protocolnew("staging/cursor-shape" "cursor-shape-v1" false)
 protocolnew("stable/tablet" "tablet-v2" false)
 
 # Installation
-install(TARGETS hyprlock)
+install(TARGETS abysslock)
 
-install(FILES ${CMAKE_SOURCE_DIR}/pam/hyprlock
+install(FILES ${CMAKE_SOURCE_DIR}/pam/abysslock
         DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d)
 
 install(
   FILES ${CMAKE_SOURCE_DIR}/assets/example.conf
-  DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/hypr
-  RENAME hyprlock.conf)
+  DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/abyss
+  RENAME abysslock.conf)

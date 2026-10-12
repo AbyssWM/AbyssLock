@@ -1,15 +1,15 @@
 #pragma once
 
-#include <hyprgraphics/resource/resources/AsyncResource.hpp>
-#include <hyprgraphics/resource/resources/TextResource.hpp>
+#include <abyssgraphics/resource/resources/AsyncResource.hpp>
+#include <abyssgraphics/resource/resources/TextResource.hpp>
 
-class CTextCmdResource : public Hyprgraphics::IAsyncResource {
+class CTextCmdResource : public Abyssgraphics::IAsyncResource {
   public:
-    CTextCmdResource(Hyprgraphics::CTextResource::STextResourceData&& data);
+    CTextCmdResource(Abyssgraphics::CTextResource::STextResourceData&& data);
     virtual ~CTextCmdResource() = default;
 
     virtual void render();
 
   private:
-    Hyprgraphics::CTextResource::STextResourceData m_data;
+    Abyssgraphics::CTextResource::STextResourceData m_data;
 };

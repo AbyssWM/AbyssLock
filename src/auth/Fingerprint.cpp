@@ -1,5 +1,5 @@
 #include "Fingerprint.hpp"
-#include "../core/hyprlock.hpp"
+#include "../core/abysslock.hpp"
 #include "../core/Dbus.hpp"
 #include "../helpers/Log.hpp"
 #include "../config/ConfigManager.hpp"
@@ -37,9 +37,9 @@ static std::map<std::string, MatchResult> s_mapStringToTestType = {{"verify-no-m
                                                                    {"verify-unknown-error", MATCH_UNKNOWN_ERROR}};
 
 CFingerprint::CFingerprint() {
-    static const auto FINGERPRINTREADY   = g_pConfigManager->getValue<Hyprlang::STRING>("auth:fingerprint:ready_message");
+    static const auto FINGERPRINTREADY   = g_pConfigManager->getValue<Abyssparse::STRING>("auth:fingerprint:ready_message");
     m_sFingerprintReady                  = *FINGERPRINTREADY;
-    static const auto FINGERPRINTPRESENT = g_pConfigManager->getValue<Hyprlang::STRING>("auth:fingerprint:present_message");
+    static const auto FINGERPRINTPRESENT = g_pConfigManager->getValue<Abyssparse::STRING>("auth:fingerprint:present_message");
     m_sFingerprintPresent                = *FINGERPRINTPRESENT;
 }
 
@@ -131,7 +131,7 @@ bool CFingerprint::createDeviceProxy() {
                 if (!isPresent)
                     return;
                 m_sPrompt = m_sFingerprintPresent;
-                g_pHyprlock->enqueueForceUpdateTimers();
+                g_pAbysslock->enqueueForceUpdateTimers();
             } catch (std::out_of_range& e) {}
         });
 
@@ -156,8 +156,8 @@ void CFingerprint::handleVerifyStatus(const std::string& result, bool done) {
                 m_sFailureReason = "Fingerprint auth disabled (too many failed attempts)";
             } else {
                 done                         = false;
-                static const auto RETRYDELAY = g_pConfigManager->getValue<Hyprlang::INT>("auth:fingerprint:retry_delay");
-                g_pHyprlock->addTimer(std::chrono::milliseconds(*RETRYDELAY), [](ASP<CTimer> self, void* data) { ((CFingerprint*)data)->startVerify(true); }, this);
+                static const auto RETRYDELAY = g_pConfigManager->getValue<Abyssparse::INT>("auth:fingerprint:retry_delay");
+                g_pAbysslock->addTimer(std::chrono::milliseconds(*RETRYDELAY), [](ASP<CTimer> self, void* data) { ((CFingerprint*)data)->startVerify(true); }, this);
                 m_sFailureReason = "Fingerprint did not match";
             }
             break;
@@ -195,7 +195,7 @@ void CFingerprint::handleVerifyStatus(const std::string& result, bool done) {
     if (!authenticated && !retry)
         g_pAuth->enqueueFail(m_sFailureReason, AUTH_IMPL_FINGERPRINT);
     else if (retry)
-        g_pHyprlock->enqueueForceUpdateTimers();
+        g_pAbysslock->enqueueForceUpdateTimers();
 
     if (done || m_sDBUSState.abort)
         m_sDBUSState.done = true;
@@ -237,7 +237,7 @@ void CFingerprint::startVerify(bool isRetry) {
             } else
                 m_sPrompt = m_sFingerprintReady;
         }
-        g_pHyprlock->enqueueForceUpdateTimers();
+        g_pAbysslock->enqueueForceUpdateTimers();
     });
 }
 

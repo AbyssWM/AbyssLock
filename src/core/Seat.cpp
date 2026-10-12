@@ -1,5 +1,5 @@
 #include "Seat.hpp"
-#include "hyprlock.hpp"
+#include "abysslock.hpp"
 #include "../helpers/Log.hpp"
 #include "../config/ConfigManager.hpp"
 #include <chrono>
@@ -30,19 +30,19 @@ void CSeatManager::registerSeat(SP<CCWlSeat> seat) {
         if (caps & WL_SEAT_CAPABILITY_POINTER) {
             m_pPointer = makeShared<CCWlPointer>(r->sendGetPointer());
 
-            static const auto HIDECURSOR = g_pConfigManager->getValue<Hyprlang::INT>("general:hide_cursor");
+            static const auto HIDECURSOR = g_pConfigManager->getValue<Abyssparse::INT>("general:hide_cursor");
             m_pPointer->setMotion([](CCWlPointer* r, uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y) {
-                g_pHyprlock->m_vMouseLocation = {wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y)};
+                g_pAbysslock->m_vMouseLocation = {wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y)};
 
                 if (!*HIDECURSOR)
-                    g_pHyprlock->onHover(g_pHyprlock->m_vMouseLocation);
+                    g_pAbysslock->onHover(g_pAbysslock->m_vMouseLocation);
 
-                if (std::chrono::system_clock::now() > g_pHyprlock->m_tGraceEnds)
+                if (std::chrono::system_clock::now() > g_pAbysslock->m_tGraceEnds)
                     return;
 
-                if (!g_pHyprlock->isFadingOutOrTerminating() && g_pHyprlock->m_vLastEnterCoords.distance({wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y)}) > 5) {
+                if (!g_pAbysslock->isFadingOutOrTerminating() && g_pAbysslock->m_vLastEnterCoords.distance({wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y)}) > 5) {
                     Log::logger->log(Log::INFO, "In grace and cursor moved more than 5px, unlocking!");
-                    g_pHyprlock->fadeOutAndUnlock();
+                    g_pAbysslock->fadeOutAndUnlock();
                 }
             });
 
@@ -57,35 +57,35 @@ void CSeatManager::registerSeat(SP<CCWlSeat> seat) {
                 else
                     m_pCursorShape->setShape(wpCursorShapeDeviceV1Shape::WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_DEFAULT);
 
-                g_pHyprlock->m_vLastEnterCoords = {wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y)};
+                g_pAbysslock->m_vLastEnterCoords = {wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y)};
 
                 if (*HIDECURSOR)
                     return;
 
-                for (const auto& POUTPUT : g_pHyprlock->m_vOutputs) {
+                for (const auto& POUTPUT : g_pAbysslock->m_vOutputs) {
                     if (!POUTPUT->m_sessionLockSurface)
                         continue;
 
                     const auto& PWLSURFACE = POUTPUT->m_sessionLockSurface->getWlSurface();
                     if (PWLSURFACE->resource() == surf)
-                        g_pHyprlock->m_focusedOutput = POUTPUT;
+                        g_pAbysslock->m_focusedOutput = POUTPUT;
                 }
             });
 
-            m_pPointer->setLeave([](CCWlPointer* r, uint32_t serial, wl_proxy* surf) { g_pHyprlock->m_focusedOutput.reset(); });
+            m_pPointer->setLeave([](CCWlPointer* r, uint32_t serial, wl_proxy* surf) { g_pAbysslock->m_focusedOutput.reset(); });
 
             m_pPointer->setButton([](CCWlPointer* r, uint32_t serial, uint32_t time, uint32_t button, wl_pointer_button_state state) {
                 if (*HIDECURSOR)
                     return;
-                g_pHyprlock->onClick(button, state == WL_POINTER_BUTTON_STATE_PRESSED, g_pHyprlock->m_vMouseLocation);
+                g_pAbysslock->onClick(button, state == WL_POINTER_BUTTON_STATE_PRESSED, g_pAbysslock->m_vMouseLocation);
             });
         }
         if (caps & WL_SEAT_CAPABILITY_TOUCH) {
             m_pTouch = makeShared<CCWlTouch>(r->sendGetTouch());
             m_pTouch->setDown([](CCWlTouch* r, uint32_t serial, uint32_t time, wl_proxy* surface, int32_t id, wl_fixed_t x, wl_fixed_t y) {
-                g_pHyprlock->onClick(BTN_LEFT, true, {wl_fixed_to_double(x), wl_fixed_to_double(y)});
+                g_pAbysslock->onClick(BTN_LEFT, true, {wl_fixed_to_double(x), wl_fixed_to_double(y)});
             });
-            m_pTouch->setUp([](CCWlTouch* r, uint32_t serial, uint32_t time, int32_t id) { g_pHyprlock->onClick(BTN_LEFT, false, {0, 0}); });
+            m_pTouch->setUp([](CCWlTouch* r, uint32_t serial, uint32_t time, int32_t id) { g_pAbysslock->onClick(BTN_LEFT, false, {0, 0}); });
         };
         if (caps & WL_SEAT_CAPABILITY_KEYBOARD) {
             m_pKeeb = makeShared<CCWlKeyboard>(r->sendGetKeyboard());
@@ -132,16 +132,16 @@ void CSeatManager::registerSeat(SP<CCWlSeat> seat) {
             });
 
             m_pKeeb->setKey([](CCWlKeyboard* r, uint32_t serial, uint32_t time, uint32_t key, wl_keyboard_key_state state) {
-                g_pHyprlock->onKey(key, state == WL_KEYBOARD_KEY_STATE_PRESSED);
+                g_pAbysslock->onKey(key, state == WL_KEYBOARD_KEY_STATE_PRESSED);
             });
 
             m_pKeeb->setModifiers([this](CCWlKeyboard* r, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group) {
                 if (!m_pXKBState)
                     return;
 
-                if (group != g_pHyprlock->m_uiActiveLayout) {
-                    g_pHyprlock->m_uiActiveLayout = group;
-                    for (auto& t : g_pHyprlock->getTimers()) {
+                if (group != g_pAbysslock->m_uiActiveLayout) {
+                    g_pAbysslock->m_uiActiveLayout = group;
+                    for (auto& t : g_pAbysslock->getTimers()) {
                         if (t->canForceUpdate()) {
                             t->call(t);
                             t->cancel();
@@ -150,13 +150,13 @@ void CSeatManager::registerSeat(SP<CCWlSeat> seat) {
                 }
 
                 xkb_state_update_mask(m_pXKBState, mods_depressed, mods_latched, mods_locked, 0, 0, group);
-                g_pHyprlock->m_bCapsLock = xkb_state_mod_name_is_active(m_pXKBState, XKB_MOD_NAME_CAPS, XKB_STATE_MODS_LOCKED);
-                g_pHyprlock->m_bNumLock  = xkb_state_mod_name_is_active(m_pXKBState, XKB_MOD_NAME_NUM, XKB_STATE_MODS_LOCKED);
+                g_pAbysslock->m_bCapsLock = xkb_state_mod_name_is_active(m_pXKBState, XKB_MOD_NAME_CAPS, XKB_STATE_MODS_LOCKED);
+                g_pAbysslock->m_bNumLock  = xkb_state_mod_name_is_active(m_pXKBState, XKB_MOD_NAME_NUM, XKB_STATE_MODS_LOCKED);
             });
 
             m_pKeeb->setRepeatInfo([](CCWlKeyboard* r, int32_t rate, int32_t delay) {
-                g_pHyprlock->m_iKeebRepeatRate  = rate;
-                g_pHyprlock->m_iKeebRepeatDelay = delay;
+                g_pAbysslock->m_iKeebRepeatRate  = rate;
+                g_pAbysslock->m_iKeebRepeatDelay = delay;
             });
         }
     });

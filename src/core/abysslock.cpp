@@ -1,4 +1,4 @@
-#include "hyprlock.hpp"
+#include "abysslock.hpp"
 #include "../helpers/Log.hpp"
 #include "../config/ConfigManager.hpp"
 #include "../renderer/Renderer.hpp"
@@ -9,7 +9,7 @@
 #include "./Egl.hpp"
 #include "./Seat.hpp"
 #include <chrono>
-#include <hyprutils/memory/UniquePtr.hpp>
+#include <abyssutils/memory/UniquePtr.hpp>
 #include <sys/wait.h>
 #include <sys/poll.h>
 #include <sys/mman.h>
@@ -21,10 +21,10 @@
 #include <xf86drm.h>
 #include <algorithm>
 #include <sdbus-c++/sdbus-c++.h>
-#include <hyprutils/os/Process.hpp>
+#include <abyssutils/os/Process.hpp>
 #include <malloc.h>
 
-using namespace Hyprutils::OS;
+using namespace Abyssutils::OS;
 
 static void setMallocThreshold() {
 #ifdef M_TRIM_THRESHOLD
@@ -37,7 +37,7 @@ static void setMallocThreshold() {
 }
 
 static bool screencopyRequired() {
-    static const auto ANIMATIONSENABLED = g_pConfigManager->getValue<Hyprlang::INT>("animations:enabled");
+    static const auto ANIMATIONSENABLED = g_pConfigManager->getValue<Abyssparse::INT>("animations:enabled");
 
     const auto        FADEINCFG  = g_pConfigManager->m_AnimationTree.getConfig("fadeIn");
     const auto        FADEOUTCFG = g_pConfigManager->m_AnimationTree.getConfig("fadeOut");
@@ -50,13 +50,13 @@ static bool screencopyRequired() {
         return true;
 
     const auto BGSCREENSHOT = std::ranges::any_of(g_pConfigManager->getWidgetConfigs(), [](const auto& w) { //
-        return w.type == "background" && std::string{std::any_cast<Hyprlang::STRING>(w.values.at("path"))} == "screenshot";
+        return w.type == "background" && std::string{std::any_cast<Abyssparse::STRING>(w.values.at("path"))} == "screenshot";
     });
 
     return BGSCREENSHOT;
 }
 
-CHyprlock::CHyprlock(std::string_view wlDisplay, const bool immediateRender, const int graceSeconds) : m_screencopyRequired(screencopyRequired()) {
+CAbysslock::CAbysslock(std::string_view wlDisplay, const bool immediateRender, const int graceSeconds) : m_screencopyRequired(screencopyRequired()) {
     setMallocThreshold();
 
     m_sWaylandState.display = wl_display_connect(wlDisplay.empty() ? nullptr : std::string{wlDisplay}.c_str());
@@ -69,18 +69,18 @@ CHyprlock::CHyprlock(std::string_view wlDisplay, const bool immediateRender, con
     else
         m_tGraceEnds = std::chrono::system_clock::from_time_t(0);
 
-    static const auto IMMEDIATERENDER = g_pConfigManager->getValue<Hyprlang::INT>("general:immediate_render");
+    static const auto IMMEDIATERENDER = g_pConfigManager->getValue<Abyssparse::INT>("general:immediate_render");
     m_bImmediateRender                = immediateRender || *IMMEDIATERENDER;
 
     const auto CURRENTDESKTOP = getenv("XDG_CURRENT_DESKTOP");
     const auto SZCURRENTD     = std::string{CURRENTDESKTOP ? CURRENTDESKTOP : ""};
     m_sCurrentDesktop         = SZCURRENTD;
 
-    static const auto ENABLEFINGERPRINT = g_pConfigManager->getValue<Hyprlang::INT>("auth:fingerprint:enabled");
+    static const auto ENABLEFINGERPRINT = g_pConfigManager->getValue<Abyssparse::INT>("auth:fingerprint:enabled");
     g_dbus                              = makeUnique<CDbus>(*ENABLEFINGERPRINT);
 }
 
-CHyprlock::~CHyprlock() {
+CAbysslock::~CAbysslock() {
     if (dma.gbmDevice)
         gbm_device_destroy(dma.gbmDevice);
 }
@@ -102,7 +102,7 @@ static void handleUnlockSignal(int sig) {
 
 static void handleForceUpdateSignal(int sig) {
     if (sig == SIGUSR2) {
-        for (auto& t : g_pHyprlock->getTimers()) {
+        for (auto& t : g_pAbysslock->getTimers()) {
             if (t->canForceUpdate()) {
                 t->call(t);
                 t->cancel();
@@ -136,7 +136,7 @@ static char* gbm_find_render_node(drmDevice* device) {
     return render_node;
 }
 
-gbm_device* CHyprlock::createGBMDevice(drmDevice* dev) {
+gbm_device* CAbysslock::createGBMDevice(drmDevice* dev) {
     char* renderNode = gbm_find_render_node(dev);
 
     if (!renderNode) {
@@ -157,7 +157,7 @@ gbm_device* CHyprlock::createGBMDevice(drmDevice* dev) {
     return gbm_create_device(fd);
 }
 
-void CHyprlock::addDmabufListener() {
+void CAbysslock::addDmabufListener() {
     if (!dma.linuxDmabuf || !dma.linuxDmabufFeedback)
         return;
 
@@ -264,7 +264,7 @@ void CHyprlock::addDmabufListener() {
     });
 }
 
-void CHyprlock::removeDmabufListener() {
+void CAbysslock::removeDmabufListener() {
     if (dma.linuxDmabufFeedback) {
         dma.linuxDmabufFeedback->sendDestroy();
         dma.linuxDmabufFeedback.reset();
@@ -276,14 +276,14 @@ void CHyprlock::removeDmabufListener() {
     }
 }
 
-void CHyprlock::run() {
+void CAbysslock::run() {
     m_sWaylandState.registry = makeShared<CCWlRegistry>((wl_proxy*)wl_display_get_registry(m_sWaylandState.display));
     m_sWaylandState.registry->setGlobal([this](CCWlRegistry* r, uint32_t name, const char* interface, uint32_t version) {
         const std::string IFACE = interface;
         Log::logger->log(Log::INFO, "  | got iface: {} v{}", IFACE, version);
 
         if (IFACE == zwp_linux_dmabuf_v1_interface.name) {
-            static const auto SCMODE = g_pConfigManager->getValue<Hyprlang::INT>("general:screencopy_mode");
+            static const auto SCMODE = g_pConfigManager->getValue<Abyssparse::INT>("general:screencopy_mode");
             if (!m_screencopyRequired || *SCMODE == 1)
                 return;
 
@@ -298,7 +298,7 @@ void CHyprlock::run() {
             addDmabufListener();
         } else if (IFACE == wl_seat_interface.name) {
             if (g_pSeatManager->registered()) {
-                Log::logger->log(Log::WARN, "Hyprlock does not support multi-seat configurations. Only binding to the first seat.");
+                Log::logger->log(Log::WARN, "Abysslock does not support multi-seat configurations. Only binding to the first seat.");
                 return;
             }
 
@@ -365,9 +365,9 @@ void CHyprlock::run() {
     else
         Log::logger->log(Log::INFO, "Skipping screencopy");
 
-    if (!g_pHyprlock->m_bImmediateRender)
+    if (!g_pAbysslock->m_bImmediateRender)
         // Gather background resources and screencopy frames before locking the screen.
-        // We need to do this because as soon as we lock the screen, workspaces frames can no longer be captured. It either won't work at all, or we will capture hyprlock itself.
+        // We need to do this because as soon as we lock the screen, workspaces frames can no longer be captured. It either won't work at all, or we will capture abysslock itself.
         // Bypass with --immediate-render (can cause the background first rendering a solid color and missing or inaccurate screencopy frames)
         g_asyncResourceManager->gatherInitialResources(m_sWaylandState.display);
 
@@ -516,7 +516,7 @@ void CHyprlock::run() {
     Log::logger->log(Log::INFO, "Reached the end, exiting");
 }
 
-void CHyprlock::fadeOutAndUnlock() {
+void CAbysslock::fadeOutAndUnlock() {
     m_fadeOutOrTerminate = true;
 
     if (!m_sLockState.locked) {
@@ -529,19 +529,19 @@ void CHyprlock::fadeOutAndUnlock() {
     renderAllOutputs();
 }
 
-bool CHyprlock::isFadingOutOrTerminating() {
+bool CAbysslock::isFadingOutOrTerminating() {
     return m_fadeOutOrTerminate;
 }
 
-bool CHyprlock::isTerminating() {
+bool CAbysslock::isTerminating() {
     return m_bTerminate;
 }
 
-bool CHyprlock::isLockAquired() {
+bool CAbysslock::isLockAquired() {
     return m_lockAquired;
 }
 
-void CHyprlock::clearPasswordBuffer() {
+void CAbysslock::clearPasswordBuffer() {
     if (m_sPasswordState.passBuffer.empty())
         return;
 
@@ -550,7 +550,7 @@ void CHyprlock::clearPasswordBuffer() {
     renderAllOutputs();
 }
 
-void CHyprlock::renderOutput(const std::string& stringPort) {
+void CAbysslock::renderOutput(const std::string& stringPort) {
     const auto MON = std::ranges::find_if(m_vOutputs, [stringPort](const auto& other) { return other->stringPort == stringPort; });
 
     if (MON == m_vOutputs.end() || !*MON)
@@ -564,7 +564,7 @@ void CHyprlock::renderOutput(const std::string& stringPort) {
     PMONITOR->m_sessionLockSurface->render();
 }
 
-void CHyprlock::renderAllOutputs() {
+void CAbysslock::renderAllOutputs() {
     for (auto& o : m_vOutputs) {
         if (!o->m_sessionLockSurface)
             continue;
@@ -573,7 +573,7 @@ void CHyprlock::renderAllOutputs() {
     }
 }
 
-void CHyprlock::startKeyRepeat(xkb_keysym_t sym) {
+void CAbysslock::startKeyRepeat(xkb_keysym_t sym) {
     if (m_pKeyRepeatTimer) {
         m_pKeyRepeatTimer->cancel();
         m_pKeyRepeatTimer.reset();
@@ -585,10 +585,10 @@ void CHyprlock::startKeyRepeat(xkb_keysym_t sym) {
     if (m_iKeebRepeatDelay <= 0)
         return;
 
-    m_pKeyRepeatTimer = addTimer(std::chrono::milliseconds(m_iKeebRepeatDelay), [sym](ASP<CTimer> self, void* data) { g_pHyprlock->repeatKey(sym); }, nullptr);
+    m_pKeyRepeatTimer = addTimer(std::chrono::milliseconds(m_iKeebRepeatDelay), [sym](ASP<CTimer> self, void* data) { g_pAbysslock->repeatKey(sym); }, nullptr);
 }
 
-void CHyprlock::repeatKey(xkb_keysym_t sym) {
+void CAbysslock::repeatKey(xkb_keysym_t sym) {
     if (m_iKeebRepeatRate <= 0)
         return;
 
@@ -596,12 +596,12 @@ void CHyprlock::repeatKey(xkb_keysym_t sym) {
 
     // This condition is for backspace and delete keys, but should also be ok for other keysyms since our buffer won't be empty anyways
     if (bool CONTINUE = m_sPasswordState.passBuffer.length() > 0; CONTINUE)
-        m_pKeyRepeatTimer = addTimer(std::chrono::milliseconds(m_iKeebRepeatRate), [sym](ASP<CTimer> self, void* data) { g_pHyprlock->repeatKey(sym); }, nullptr);
+        m_pKeyRepeatTimer = addTimer(std::chrono::milliseconds(m_iKeebRepeatRate), [sym](ASP<CTimer> self, void* data) { g_pAbysslock->repeatKey(sym); }, nullptr);
 
     renderAllOutputs();
 }
 
-void CHyprlock::onKey(uint32_t key, bool down) {
+void CAbysslock::onKey(uint32_t key, bool down) {
     if (!m_sLockState.locked)
         return;
 
@@ -660,7 +660,7 @@ void CHyprlock::onKey(uint32_t key, bool down) {
     renderAllOutputs();
 }
 
-void CHyprlock::handleKeySym(xkb_keysym_t sym, bool composed) {
+void CAbysslock::handleKeySym(xkb_keysym_t sym, bool composed) {
     const auto SYM = sym;
 
     if (SYM == XKB_KEY_Escape || (m_bCtrl && (SYM == XKB_KEY_u || SYM == XKB_KEY_BackSpace || SYM == XKB_KEY_a))) {
@@ -670,7 +670,7 @@ void CHyprlock::handleKeySym(xkb_keysym_t sym, bool composed) {
     } else if (SYM == XKB_KEY_Return || SYM == XKB_KEY_KP_Enter) {
         Log::logger->log(Log::INFO, "Authenticating");
 
-        static const auto IGNOREEMPTY = g_pConfigManager->getValue<Hyprlang::INT>("general:ignore_empty_input");
+        static const auto IGNOREEMPTY = g_pConfigManager->getValue<Abyssparse::INT>("general:ignore_empty_input");
 
         if (m_sPasswordState.passBuffer.empty() && *IGNOREEMPTY) {
             Log::logger->log(Log::INFO, "Ignoring empty input");
@@ -699,14 +699,14 @@ void CHyprlock::handleKeySym(xkb_keysym_t sym, bool composed) {
     }
 }
 
-void CHyprlock::onClick(uint32_t button, bool down, const Vector2D& pos) {
+void CAbysslock::onClick(uint32_t button, bool down, const Vector2D& pos) {
     if (!down)
         return;
 
     if (!m_focusedOutput.lock())
         return;
 
-    // TODO: add the UNLIKELY marco from Hyprland
+    // TODO: add the UNLIKELY marco from Abyssland
     if (!m_focusedOutput->m_sessionLockSurface)
         return;
 
@@ -718,7 +718,7 @@ void CHyprlock::onClick(uint32_t button, bool down, const Vector2D& pos) {
     }
 }
 
-void CHyprlock::onHover(const Vector2D& pos) {
+void CAbysslock::onHover(const Vector2D& pos) {
     if (!m_focusedOutput.lock())
         return;
 
@@ -757,7 +757,7 @@ void CHyprlock::onHover(const Vector2D& pos) {
         m_focusedOutput->m_sessionLockSurface->render();
 }
 
-bool CHyprlock::acquireSessionLock() {
+bool CAbysslock::acquireSessionLock() {
     Log::logger->log(Log::INFO, "Locking session");
     m_sLockState.lock = makeShared<CCExtSessionLockV1>(m_sWaylandState.sessionLock->sendLock());
     if (!m_sLockState.lock) {
@@ -789,7 +789,7 @@ bool CHyprlock::acquireSessionLock() {
     return true;
 }
 
-void CHyprlock::releaseSessionLock() {
+void CAbysslock::releaseSessionLock() {
     Log::logger->log(Log::INFO, "Unlocking session");
 
     if (m_bTerminate) {
@@ -819,13 +819,13 @@ void CHyprlock::releaseSessionLock() {
     wl_display_roundtrip(m_sWaylandState.display);
 }
 
-void CHyprlock::onLockLocked() {
+void CAbysslock::onLockLocked() {
     Log::logger->log(Log::INFO, "onLockLocked called");
 
     m_sLockState.locked = true;
 }
 
-void CHyprlock::onLockFinished() {
+void CAbysslock::onLockFinished() {
     Log::logger->log(Log::INFO, "onLockFinished called. Seems we got yeeten. Is another lockscreen running?");
 
     if (!m_sLockState.lock) {
@@ -846,40 +846,40 @@ void CHyprlock::onLockFinished() {
     m_bTerminate        = true;
 }
 
-SP<CCExtSessionLockManagerV1> CHyprlock::getSessionLockMgr() {
+SP<CCExtSessionLockManagerV1> CAbysslock::getSessionLockMgr() {
     return m_sWaylandState.sessionLock;
 }
 
-SP<CCExtSessionLockV1> CHyprlock::getSessionLock() {
+SP<CCExtSessionLockV1> CAbysslock::getSessionLock() {
     return m_sLockState.lock;
 }
 
-SP<CCWlCompositor> CHyprlock::getCompositor() {
+SP<CCWlCompositor> CAbysslock::getCompositor() {
     return m_sWaylandState.compositor;
 }
 
-wl_display* CHyprlock::getDisplay() {
+wl_display* CAbysslock::getDisplay() {
     return m_sWaylandState.display;
 }
 
-SP<CCWpFractionalScaleManagerV1> CHyprlock::getFractionalMgr() {
+SP<CCWpFractionalScaleManagerV1> CAbysslock::getFractionalMgr() {
     return m_sWaylandState.fractional;
 }
 
-SP<CCWpViewporter> CHyprlock::getViewporter() {
+SP<CCWpViewporter> CAbysslock::getViewporter() {
     return m_sWaylandState.viewporter;
 }
 
-size_t CHyprlock::getPasswordBufferLen() {
+size_t CAbysslock::getPasswordBufferLen() {
     return m_sPasswordState.passBuffer.length();
 }
 
-size_t CHyprlock::getPasswordBufferDisplayLen() {
+size_t CAbysslock::getPasswordBufferDisplayLen() {
     // Counts utf-8 codepoints in the buffer. A byte is counted if it does not match 0b10xxxxxx.
     return std::count_if(m_sPasswordState.passBuffer.begin(), m_sPasswordState.passBuffer.end(), [](char c) { return (c & 0xc0) != 0x80; });
 }
 
-ASP<CTimer> CHyprlock::addTimer(const std::chrono::system_clock::duration& timeout, std::function<void(ASP<CTimer> self, void* data)> cb_, void* data, bool force) {
+ASP<CTimer> CAbysslock::addTimer(const std::chrono::system_clock::duration& timeout, std::function<void(ASP<CTimer> self, void* data)> cb_, void* data, bool force) {
     std::lock_guard<std::mutex> lg(m_sLoopState.timersMutex);
     const auto                  T = m_vTimers.emplace_back(makeAtomicShared<CTimer>(timeout, cb_, data, force));
     m_sLoopState.timerEvent       = true;
@@ -887,7 +887,7 @@ ASP<CTimer> CHyprlock::addTimer(const std::chrono::system_clock::duration& timeo
     return T;
 }
 
-void CHyprlock::processTimers() {
+void CAbysslock::processTimers() {
     // do timers
     m_sLoopState.timersMutex.lock();
     auto timerscpy = m_vTimers;
@@ -912,15 +912,15 @@ void CHyprlock::processTimers() {
     passed.clear();
 }
 
-std::vector<ASP<CTimer>> CHyprlock::getTimers() {
+std::vector<ASP<CTimer>> CAbysslock::getTimers() {
     return m_vTimers;
 }
 
-void CHyprlock::enqueueForceUpdateTimers() {
+void CAbysslock::enqueueForceUpdateTimers() {
     addTimer(
         std::chrono::milliseconds(1),
         [](ASP<CTimer> self, void* data) {
-            for (auto& t : g_pHyprlock->getTimers()) {
+            for (auto& t : g_pAbysslock->getTimers()) {
                 if (t->canForceUpdate()) {
                     t->call(t);
                     t->cancel();
@@ -930,10 +930,10 @@ void CHyprlock::enqueueForceUpdateTimers() {
         nullptr, false);
 }
 
-SP<CCZwlrScreencopyManagerV1> CHyprlock::getScreencopy() {
+SP<CCZwlrScreencopyManagerV1> CAbysslock::getScreencopy() {
     return m_sWaylandState.screencopy;
 }
 
-SP<CCWlShm> CHyprlock::getShm() {
+SP<CCWlShm> CAbysslock::getShm() {
     return m_sWaylandState.shm;
 }

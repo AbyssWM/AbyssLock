@@ -1,6 +1,6 @@
 #include "Pam.hpp"
 #include "../config/ConfigManager.hpp"
-#include "../core/hyprlock.hpp"
+#include "../core/abysslock.hpp"
 #include "../helpers/Log.hpp"
 #include "../helpers/MiscFunctions.hpp"
 
@@ -31,13 +31,13 @@ int conv(int num_msg, const struct pam_message** msg, struct pam_response** resp
                 // When the prompt is the same as the last one, I guess our answer can be the same.
                 if (initialPrompt || PROMPTCHANGED) {
                     CONVERSATIONSTATE->prompt = PROMPT;
-                    g_pHyprlock->enqueueForceUpdateTimers();
+                    g_pAbysslock->enqueueForceUpdateTimers();
 
                     CONVERSATIONSTATE->waitForInput();
                 }
 
                 // Needed for unlocks via SIGUSR1
-                if (g_pHyprlock->isFadingOutOrTerminating())
+                if (g_pAbysslock->isFadingOutOrTerminating())
                     return PAM_CONV_ERR;
 
                 pamReply[i].resp = strdup(CONVERSATIONSTATE->input.c_str());
@@ -64,7 +64,7 @@ int conv(int num_msg, const struct pam_message** msg, struct pam_response** resp
 }
 
 CPam::CPam() {
-    static const auto PAMMODULE = g_pConfigManager->getValue<Hyprlang::STRING>("auth:pam:module");
+    static const auto PAMMODULE = g_pConfigManager->getValue<Abyssparse::STRING>("auth:pam:module");
     m_sPamModule                = *PAMMODULE;
 
     if (!std::filesystem::exists(std::filesystem::path("/etc/pam.d/") / m_sPamModule)) {
@@ -87,13 +87,13 @@ void CPam::init() {
             resetConversation();
 
             // For grace or SIGUSR1 unlocks
-            if (g_pHyprlock->isFadingOutOrTerminating())
+            if (g_pAbysslock->isFadingOutOrTerminating())
                 return;
 
             const auto AUTHENTICATED = auth();
 
             // For SIGUSR1 unlocks
-            if (g_pHyprlock->isFadingOutOrTerminating())
+            if (g_pAbysslock->isFadingOutOrTerminating())
                 return;
 
             if (!AUTHENTICATED)
@@ -147,7 +147,7 @@ void CPam::waitForInput() {
     m_bBlockInput                          = false;
     m_sConversationState.waitingForPamAuth = false;
     m_sConversationState.inputRequested    = true;
-    m_sConversationState.inputSubmittedCondition.wait(lk, [this] { return !m_sConversationState.inputRequested || g_pHyprlock->isFadingOutOrTerminating(); });
+    m_sConversationState.inputSubmittedCondition.wait(lk, [this] { return !m_sConversationState.inputRequested || g_pAbysslock->isFadingOutOrTerminating(); });
     m_bBlockInput = true;
 }
 

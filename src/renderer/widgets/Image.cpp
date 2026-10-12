@@ -1,13 +1,13 @@
 #include "Image.hpp"
 #include "../Renderer.hpp"
 #include "../AsyncResourceManager.hpp"
-#include "../../core/hyprlock.hpp"
+#include "../../core/abysslock.hpp"
 #include "../../helpers/Log.hpp"
 #include "../../helpers/MiscFunctions.hpp"
 #include "../../config/ConfigDataValues.hpp"
 #include <cmath>
-#include <hyprlang.hpp>
-#include <hyprutils/math/Vector2D.hpp>
+#include <abyssparse.hpp>
+#include <abyssutils/math/Vector2D.hpp>
 
 CImage::~CImage() {
     reset();
@@ -70,9 +70,9 @@ void CImage::onTimerUpdate() {
 void CImage::plantTimer() {
 
     if (reloadTime == 0) {
-        imageTimer = g_pHyprlock->addTimer(std::chrono::hours(1), [REF = m_self](auto, auto) { onTimer(REF); }, nullptr, true);
+        imageTimer = g_pAbysslock->addTimer(std::chrono::hours(1), [REF = m_self](auto, auto) { onTimer(REF); }, nullptr, true);
     } else if (reloadTime > 0)
-        imageTimer = g_pHyprlock->addTimer(std::chrono::seconds(reloadTime), [REF = m_self](auto, auto) { onTimer(REF); }, nullptr, false);
+        imageTimer = g_pAbysslock->addTimer(std::chrono::seconds(reloadTime), [REF = m_self](auto, auto) { onTimer(REF); }, nullptr, false);
 }
 
 void CImage::configure(const std::unordered_map<std::string, std::any>& props, const SP<COutput>& pOutput) {
@@ -84,19 +84,19 @@ void CImage::configure(const std::unordered_map<std::string, std::any>& props, c
     shadow.configure(m_self, props, viewport);
 
     try {
-        size      = std::any_cast<Hyprlang::INT>(props.at("size"));
-        rounding  = std::any_cast<Hyprlang::INT>(props.at("rounding"));
-        border    = std::any_cast<Hyprlang::INT>(props.at("border_size"));
+        size      = std::any_cast<Abyssparse::INT>(props.at("size"));
+        rounding  = std::any_cast<Abyssparse::INT>(props.at("rounding"));
+        border    = std::any_cast<Abyssparse::INT>(props.at("border_size"));
         color     = *CGradientValueData::fromAnyPv(props.at("border_color"));
         configPos = CLayoutValueData::fromAnyPv(props.at("position"))->getAbsolute(viewport);
-        halign    = std::any_cast<Hyprlang::STRING>(props.at("halign"));
-        valign    = std::any_cast<Hyprlang::STRING>(props.at("valign"));
-        angle     = std::any_cast<Hyprlang::FLOAT>(props.at("rotate"));
+        halign    = std::any_cast<Abyssparse::STRING>(props.at("halign"));
+        valign    = std::any_cast<Abyssparse::STRING>(props.at("valign"));
+        angle     = std::any_cast<Abyssparse::FLOAT>(props.at("rotate"));
 
-        path           = std::any_cast<Hyprlang::STRING>(props.at("path"));
-        reloadTime     = std::any_cast<Hyprlang::INT>(props.at("reload_time"));
-        reloadCommand  = std::any_cast<Hyprlang::STRING>(props.at("reload_cmd"));
-        onclickCommand = std::any_cast<Hyprlang::STRING>(props.at("onclick"));
+        path           = std::any_cast<Abyssparse::STRING>(props.at("path"));
+        reloadTime     = std::any_cast<Abyssparse::INT>(props.at("reload_time"));
+        reloadCommand  = std::any_cast<Abyssparse::STRING>(props.at("reload_cmd"));
+        onclickCommand = std::any_cast<Abyssparse::STRING>(props.at("onclick"));
     } catch (const std::bad_any_cast& e) {
         RASSERT(false, "Failed to construct CImage: {}", e.what()); //
     } catch (const std::out_of_range& e) {
@@ -121,7 +121,7 @@ void CImage::reset() {
         imageTimer.reset();
     }
 
-    if (g_pHyprlock->isTerminating())
+    if (g_pAbysslock->isTerminating())
         return;
 
     imageFB.destroyBuffer();
@@ -183,7 +183,7 @@ bool CImage::draw(const SRenderData& data) {
             g_pRenderer->renderBorder(borderBox, color, border, BORDERROUND, 1.0);
 
         texbox.round();
-        g_pRenderer->renderTexture(texbox, *asset, 1.0, ROUND, HYPRUTILS_TRANSFORM_NORMAL);
+        g_pRenderer->renderTexture(texbox, *asset, 1.0, ROUND, ABYSSUTILS_TRANSFORM_NORMAL);
         g_pRenderer->popFb();
     }
 
@@ -204,7 +204,7 @@ bool CImage::draw(const SRenderData& data) {
 
     texbox.round();
     texbox.rot = angle;
-    g_pRenderer->renderTexture(texbox, *tex, data.opacity, 0, HYPRUTILS_TRANSFORM_FLIPPED_180);
+    g_pRenderer->renderTexture(texbox, *tex, data.opacity, 0, ABYSSUTILS_TRANSFORM_FLIPPED_180);
 
     return data.opacity < 1.0;
 }

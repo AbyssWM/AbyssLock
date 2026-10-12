@@ -1,8 +1,8 @@
 #pragma once
 
-#include <hyprutils/animation/AnimationConfig.hpp>
+#include <abyssutils/animation/AnimationConfig.hpp>
 
-#include <hyprlang.hpp>
+#include <abyssparse.hpp>
 #include <optional>
 #include <expected>
 #include <string_view>
@@ -18,8 +18,8 @@ class CConfigManager {
     void init();
 
     template <typename T>
-    Hyprlang::CSimpleConfigValue<T> getValue(const std::string& name) {
-        return Hyprlang::CSimpleConfigValue<T>(&m_config, name.c_str());
+    Abyssparse::CSimpleConfigValue<T> getValue(const std::string& name) {
+        return Abyssparse::CSimpleConfigValue<T>(&m_config, name.c_str());
     }
 
     struct SWidgetConfig {
@@ -37,10 +37,10 @@ class CConfigManager {
 
     std::string                                m_configCurrentPath;
 
-    Hyprutils::Animation::CAnimationConfigTree m_AnimationTree;
+    Abyssutils::Animation::CAnimationConfigTree m_AnimationTree;
 
   private:
-    Hyprlang::CConfig m_config;
+    Abyssparse::CConfig m_config;
 };
 
 inline UP<CConfigManager> g_pConfigManager;
