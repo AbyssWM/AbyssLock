@@ -162,7 +162,7 @@ protocolnew("stable/tablet" "tablet-v2" false)
 install(TARGETS abysslock)
 
 install(FILES ${CMAKE_SOURCE_DIR}/pam/abysslock
-        DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d)
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/pam.d)
 
 install(
   FILES ${CMAKE_SOURCE_DIR}/assets/example.conf

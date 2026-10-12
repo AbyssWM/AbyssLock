@@ -1,5 +1,8 @@
-# abysslock
-Abyssland's simple, yet multi-threaded and GPU-accelerated screen locking utility.
+# AbyssLock
+
+AbyssLock – lock screen for Abyssland, fork of [hyprlock](https://github.com/hyprwm/hyprlock) (BSD-3, © hyprwm/vaxerski).
+
+A simple, multi-threaded and GPU-accelerated screen locking utility using the ext-session-lock protocol.
 
 ## Features
  - Uses the ext-session-lock protocol
@@ -9,52 +12,40 @@ Abyssland's simple, yet multi-threaded and GPU-accelerated screen locking utilit
  - Blurred screenshot as the background
  - Native fingerprint support (using libfprint's dbus interface)
  - Some of Abyssland's eyecandy: gradient borders, blur, animations, shadows, etc.
- - and more...
 
-## How it looks
+## Configuration
+The config file is `~/.config/abyss/abysslock.conf` (an example is installed to `/opt/abyss/share/abyss/abysslock.conf`). The binary is `abysslock`.
+Unlocking via `SIGUSR1` works like in hyprlock.
 
-![](https://i.ibb.co/8Bd98BP/20240220-00h12m46s.png)
+## Building and installing (Abyssland ecosystem)
 
-## Docs / Configuration
-[See the wiki](https://wiki.abyssland.org/Abyss-Ecosystem/abysslock/)
+Dependencies: cairo, Abyssgraphics, Abyssparse, Abyssutils, Abyss-scanner, mesa (libgbm, libdrm, OpenGL), pam (`pam-devel` on Void), pango, sdbus-c++ >= 2.0.0, wayland-client, wayland-protocols, xkbcommon.
 
-## Arch install
+The Abyss libraries are installed to `/opt/abyss`. From the `AbysslandWC` workspace:
+
 ```sh
-pacman -S abysslock # binary x86 tagged release
-# or
-yay -S abysslock-git # compiles from latest source
+JOBS=2 sh tools/build.sh AbyssLock
 ```
 
-## Building
+PAM: `/opt/abyss` is installed without root, but PAM only reads `/etc/pam.d`. The build puts the service file at `/opt/abyss/etc/pam.d/abysslock`; copy it once as root (also done by `tools/setup-root.sh`):
 
-### Deps
-You need the following dependencies
-
-- cairo
-- abyssgraphics
-- abyssparse
-- abyssutils
-- abyss-scanner
-- mesa (required is libgbm, libdrm and the opengl runtime)
-- pam
-- pango
-- sdbus-cpp (>= 2.0.0)
-- wayland-client
-- wayland-protocols
-- xkbcommon
-
-Sometimes distro packages are missing required development files.
-Such distros usually offer development versions of library package - commonly suffixed with `-devel` or `-dev`.
-
-### Building
-
-Building:
 ```sh
-cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
-cmake --build ./build --config Release --target abysslock -j`nproc 2>/dev/null || getconf _NPROCESSORS_CONF`
+sudo install -m644 /opt/abyss/etc/pam.d/abysslock /etc/pam.d/abysslock
 ```
 
-Installation:
-```sh
-sudo cmake --install build
-```
+Without it abysslock falls back to the `su` PAM service.
+
+## Credits
+
+AbyssLock exists thanks to **[hyprlock](https://github.com/hyprwm/hyprlock)**, created by **Hypr Development** at **[hyprwm](https://github.com/hyprwm)**. All credit for the original work goes to them – please support the original project.
+
+Abyss is an independent project and is **not affiliated with or endorsed by hyprwm**.
+
+## License
+
+This project is licensed under the **BSD 3-Clause License**. The original copyright notice is kept in [`LICENSE`](LICENSE) as required.
+
+## Contributors
+
+- [bb8TheRobot](https://github.com/bb8TheRobot)
+- Claude (Anthropic) – AI pair programmer
